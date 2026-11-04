@@ -1,0 +1,25 @@
+{
+  "name": "curved",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "infra:up": "docker compose up -d --wait postgres && pnpm db:migrate && pnpm db:seed && docker compose up -d zero-cache",
+    "infra:down": "docker compose down",
+    "db:generate": "pnpm --filter @curved/db generate",
+    "db:migrate": "pnpm --filter @curved/db migrate",
+    "db:seed": "pnpm --filter @curved/db seed",
+    "zero:generate": "pnpm --filter @curved/zero generate"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
