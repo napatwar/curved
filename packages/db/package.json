@@ -9,7 +9,8 @@
     "./constants": "./src/constants.ts",
     "./dev": "./src/dev.ts",
     "./orm": "./src/orm.ts",
-    "./schema": "./src/schema/index.ts"
+    "./schema": "./src/schema/index.ts",
+    "./teams": "./src/teams.ts"
   },
   "scripts": {
     "generate": "drizzle-kit generate",
@@ -20,6 +21,7 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
+    "fractional-indexing": "^4.0.0",
     "pg": "^8.23.1",
     "uuid": "^14.0.3"
   },

@@ -9,6 +9,12 @@ export const workspaceRoles = ["owner", "admin", "member"] as const;
 
 export type WorkspaceRole = (typeof workspaceRoles)[number];
 
+/**
+ * Roles that manage teams and workflow states and empty the Trash (decision
+ * record 0006). Every member can do everything else.
+ */
+export const adminRoles = ["owner", "admin"] as const satisfies readonly WorkspaceRole[];
+
 type Tx = Transaction;
 
 /**
@@ -79,6 +85,6 @@ function assertRole(role: string, roles: readonly WorkspaceRole[] | undefined) {
   }
 }
 
-function notFound() {
+export function notFound() {
   return mutationError("not_found", "This item does not exist or you cannot access it.");
 }

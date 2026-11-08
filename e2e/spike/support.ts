@@ -63,7 +63,7 @@ type CurvedHandle = {
   };
   mutators: {
     issues: {
-      setStatus(args: { id: string; status: string }): unknown;
+      update(args: { id: string; stateId: string }): unknown;
     };
   };
 };
@@ -75,8 +75,8 @@ type SpikeTimings = {
   alertAt?: number;
   connection: { name: string; at: number }[];
   rowChanges: { text: string; at: number }[];
-  newest?: { id: string; status: string };
-  newestChanges: { status: string; at: number }[];
+  newest?: { id: string; stateId: string };
+  newestChanges: { stateId: string; at: number }[];
 };
 
 declare global {
@@ -149,7 +149,7 @@ export async function watchFirstRow(page: Page) {
 
 /**
  * Watches the newest issue through Zero directly, without React, and records
- * each status change it sees.
+ * each state change it sees.
  */
 export async function watchNewestIssue(page: Page) {
   await page.evaluate((workspaceId) => {
@@ -161,12 +161,12 @@ export async function watchNewestIssue(page: Page) {
     view.addListener((data) => {
       const [first] = data;
       const row =
-        typeof first === "object" && first && "id" in first && "status" in first
-          ? { id: String(first.id), status: String(first.status) }
+        typeof first === "object" && first && "id" in first && "stateId" in first
+          ? { id: String(first.id), stateId: String(first.stateId) }
           : undefined;
       const previous = window.spikeTimings.newest;
-      if (row && previous && row.status !== previous.status) {
-        window.spikeTimings.newestChanges.push({ status: row.status, at: Date.now() });
+      if (row && previous && row.stateId !== previous.stateId) {
+        window.spikeTimings.newestChanges.push({ stateId: row.stateId, at: Date.now() });
       }
       window.spikeTimings.newest = row;
     });

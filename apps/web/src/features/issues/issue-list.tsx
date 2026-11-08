@@ -6,13 +6,17 @@ import { v7 as uuidv7 } from "uuid";
 import { useCanWrite } from "@/hooks/use-can-write";
 
 import { CreateIssueForm } from "./create-issue-form";
-import { IssueRow } from "./issue-row";
+import { IssueRow, type IssueRowData } from "./issue-row";
 
 export function IssueList({ workspaceId }: { workspaceId: string }) {
   const zero = useZero();
   const canWrite = useCanWrite();
+  const [teams] = useQuery(queries.teams.byWorkspace({ workspaceId }));
   const [issues] = useQuery(queries.issues.byWorkspace({ workspaceId }));
   const [error, setError] = useState<string | null>(null);
+  // Every workspace has at least one team. With one team, the UI hides teams
+  // (decision record 0006), so new issues go to the first one.
+  const [team] = teams;
 
   // Zero has already applied the change locally. When the server rejects it
   // (an "app" error), Zero rolls the change back and this shows why. A "zero"
@@ -26,15 +30,32 @@ export function IssueList({ workspaceId }: { workspaceId: string }) {
     }
   }
 
+  // Done moves an issue to its team's first completed state, and Reopen to
+  // the team's default state. App logic uses the category, never the name.
+  function toggleDone(issue: IssueRowData) {
+    const issueTeam = teams.find((candidate) => candidate.id === issue.teamId);
+    const stateId =
+      issue.state?.category === "completed"
+        ? issueTeam?.defaultStateId
+        : issueTeam?.states.find((state) => state.category === "completed")?.id;
+    if (stateId) {
+      void mutate(mutators.issues.update({ id: issue.id, stateId }));
+    }
+  }
+
   return (
     <>
       <h1 className="sr-only">Issues</h1>
 
       <CreateIssueForm
-        disabled={!canWrite}
-        onCreate={(title) =>
-          void mutate(mutators.issues.create({ id: uuidv7(), workspaceId, title }))
-        }
+        disabled={!canWrite || !team}
+        onCreate={(title) => {
+          if (team) {
+            void mutate(
+              mutators.issues.create({ id: uuidv7(), workspaceId, teamId: team.id, title }),
+            );
+          }
+        }}
       />
 
       {error && (
@@ -49,14 +70,7 @@ export function IssueList({ workspaceId }: { workspaceId: string }) {
             disabled={!canWrite}
             issue={issue}
             key={issue.id}
-            onToggleStatus={() =>
-              void mutate(
-                mutators.issues.setStatus({
-                  id: issue.id,
-                  status: issue.status === "done" ? "todo" : "done",
-                }),
-              )
-            }
+            onToggleDone={() => toggleDone(issue)}
           />
         ))}
       </ul>

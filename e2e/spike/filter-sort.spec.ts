@@ -10,14 +10,14 @@ const cases: { name: string; args: Record<string, unknown> }[] = [
   { name: "default sort, newest 100", args: {} },
   { name: "sort by updatedAt asc", args: { sort: "updatedAt", direction: "asc" } },
   { name: "sort by title asc", args: { sort: "title", direction: "asc" } },
-  { name: "sort by status desc", args: { sort: "status" } },
-  { name: "status todo", args: { statuses: ["todo"] } },
+  { name: "sort by priority desc", args: { sort: "priority" } },
+  { name: "state category unstarted", args: { stateCategories: ["unstarted"] } },
   { name: "title contains 'safari'", args: { titleContains: "safari" } },
   { name: "title contains Thai text", args: { titleContains: "ภาษาไทย" } },
   {
-    name: "multi: 2 statuses, title, created and updated range, sort updatedAt",
+    name: "multi: 2 state categories, title, created and updated range, sort updatedAt",
     args: {
-      statuses: ["todo", "in_progress"],
+      stateCategories: ["unstarted", "started"],
       titleContains: "fix",
       createdAfter: now - 365 * DAY_MS,
       updatedBefore: now - 30 * DAY_MS,
@@ -26,12 +26,12 @@ const cases: { name: string; args: Record<string, unknown> }[] = [
   },
   { name: "comment contains 'websocket'", args: { commentContains: "websocket" } },
   {
-    name: "multi: status, title and comment text",
-    args: { statuses: ["in_progress"], titleContains: "search", commentContains: "regression" },
+    name: "multi: state category, title and comment text",
+    args: { stateCategories: ["started"], titleContains: "search", commentContains: "regression" },
   },
   {
-    name: "multi with no match: status, title, comment text",
-    args: { statuses: ["done"], titleContains: "zzz", commentContains: "zzz" },
+    name: "multi with no match: state category, title, comment text",
+    args: { stateCategories: ["completed"], titleContains: "zzz", commentContains: "zzz" },
   },
   { name: "1000 rows, sort by title", args: { sort: "title", direction: "asc", limit: 1000 } },
 ];

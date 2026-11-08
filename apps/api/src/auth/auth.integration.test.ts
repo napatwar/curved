@@ -1,11 +1,11 @@
 import { createDb } from "@curved/db";
 import { eq } from "@curved/db/orm";
-import { user, workspace, workspaceMember } from "@curved/db/schema";
+import { issue, team, user, workflowState, workspace, workspaceMember } from "@curved/db/schema";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { testDatabaseUrl } from "../../../../test/database";
-import { resetDatabase } from "../../../../test/fixtures";
+import { insertIssue, resetDatabase } from "../../../../test/fixtures";
 import { createAuth } from "./create-auth";
 
 const db = createDb(testDatabaseUrl);
@@ -163,6 +163,66 @@ describe("workspaces", () => {
     const response = await call("/organization/create", { name: "Mine", slug: "mine" }, other);
 
     expect(response.status).toBe(403);
+  });
+
+  it("creates the workspace's first team with the default states", async () => {
+    const admin = cookieHeader(await signUp("first@example.com"));
+
+    await call("/organization/create", { name: "Acme Corp", slug: "acme-corp" }, admin);
+
+    const [row] = await db.select().from(workspace).where(eq(workspace.slug, "acme-corp"));
+    const teams = await db
+      .select()
+      .from(team)
+      .where(eq(team.workspaceId, row?.id ?? ""));
+    expect(teams).toMatchObject([{ key: "ACM", name: "Acme Corp", nextIssueNumber: 1 }]);
+    const states = await db
+      .select()
+      .from(workflowState)
+      .where(eq(workflowState.teamId, teams[0]?.id ?? ""))
+      .orderBy(workflowState.position);
+    expect(states.map((state) => [state.name, state.category])).toEqual([
+      ["Backlog", "backlog"],
+      ["Todo", "unstarted"],
+      ["In Progress", "started"],
+      ["Done", "completed"],
+      ["Canceled", "canceled"],
+    ]);
+    expect(teams[0]?.defaultStateId).toBe(states[1]?.id);
+  });
+
+  it.each([
+    ["is removed", "/organization/remove-member"],
+    ["leaves", "/organization/leave"],
+  ])("unassigns a member's issues when the member %s", async (_, path) => {
+    auth = makeAuth(true);
+    const admin = cookieHeader(await signUp("first@example.com"));
+    const created = await call("/organization/create", { name: "Acme", slug: "acme" }, admin);
+    const { id: workspaceId } = z.object({ id: z.string() }).parse(await created.json());
+    const memberCookie = cookieHeader(await signUp("member@example.com"));
+    const [member] = await db.select().from(user).where(eq(user.email, "member@example.com"));
+    const memberId = member?.id ?? "";
+    await db.insert(workspaceMember).values({
+      id: crypto.randomUUID(),
+      workspaceId,
+      userId: memberId,
+      role: "member",
+      createdAt: new Date(),
+    });
+    const issueId = await insertIssue(db, workspaceId, { assigneeId: memberId });
+
+    const response =
+      path === "/organization/leave"
+        ? await call(path, { organizationId: workspaceId }, memberCookie)
+        : await call(
+            path,
+            { memberIdOrEmail: "member@example.com", organizationId: workspaceId },
+            admin,
+          );
+
+    expect(response.status).toBe(200);
+    const [row] = await db.select().from(issue).where(eq(issue.id, issueId));
+    expect(row?.assigneeId).toBeNull();
   });
 
   it("rejects a slug that is not lowercase ASCII", async () => {

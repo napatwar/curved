@@ -1,5 +1,7 @@
 import type { Db } from "@curved/db";
+import { teamKeyFromSlug } from "@curved/db/constants";
 import * as schema from "@curved/db/schema";
+import { createTeam } from "@curved/db/teams";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
@@ -119,6 +121,14 @@ export function createAuth(options: AuthOptions) {
           },
           beforeUpdateOrganization: async ({ organization }) => {
             assertWorkspaceSlug(organization.slug);
+          },
+          // Creating a workspace creates its first team (decision record 0006).
+          afterCreateOrganization: async ({ organization }) => {
+            await createTeam(db, {
+              workspaceId: organization.id,
+              key: teamKeyFromSlug(organization.slug),
+              name: organization.name,
+            });
           },
         },
         ...(mailer && {

@@ -11,7 +11,7 @@ import {
 
 const CHANGES = 20;
 
-test("a status change shows locally at once and in another browser within 1 second", async ({
+test("a state change shows locally at once and in another browser within 1 second", async ({
   browser,
 }) => {
   const [first, second] = await Promise.all(
