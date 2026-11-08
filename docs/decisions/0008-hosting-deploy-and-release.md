@@ -29,6 +29,7 @@ During the MVP, Curved is self-hosted and used by the maintainer alone. The clou
 - Backups: a daily `pg_dump`, point-in-time recovery with pgBackRest or WAL-G, or host volume snapshots.
 - Release tool: release-please, semantic-release, changesets, or manual tags with git-cliff.
 - Image registry: GitHub Container Registry (GHCR) or Docker Hub.
+- Live demo: a long-lived `live-demo` branch, or a demo mode setting on `main`.
 
 ## Decision outcome
 
@@ -132,12 +133,13 @@ The estimated setup is half a day to a day, with little ongoing work beyond upda
 
 ### Environments and secrets
 
-| Environment              | Where                                                                                               | Status                  |
-| ------------------------ | --------------------------------------------------------------------------------------------------- | ----------------------- |
-| Development              | The maintainer's machine: `docker-compose.yml` for Postgres and zero-cache, API and web on the host | Exists                  |
-| CI                       | GitHub Actions                                                                                      | Exists                  |
-| Production (self-hosted) | The maintainer's own instance, from the production Compose file                                     | Built during the MVP    |
-| Preview and staging      | –                                                                                                   | Deferred with the cloud |
+| Environment              | Where                                                                                                    | Status                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- | ----------------------- |
+| Development              | The maintainer's machine: `docker-compose.yml` for Postgres and zero-cache, API and web on the host      | Exists                  |
+| CI                       | GitHub Actions                                                                                           | Exists                  |
+| Production (self-hosted) | The maintainer's own instance, from the production Compose file                                          | Built during the MVP    |
+| Live demo                | The maintainer's spare laptop, a separate Compose project in demo mode, reached through Tailscale Funnel | Built during the MVP    |
+| Preview and staging      | –                                                                                                        | Deferred with the cloud |
 
 The maintainer's instance is where the self-hosted release gets tested in practice. Upgrade it only to commits or tags that passed CI, so upgrade and migration problems appear there first.
 
@@ -150,6 +152,24 @@ Secrets:
 - CI needs no secrets yet beyond `GITHUB_TOKEN`.
 - Turn on GitHub secret scanning and push protection for the repository. Both are free for public repositories.
 - Cloud secrets go in the chosen provider's secret manager.
+
+### Live demo
+
+The maintainer wants a public demo for a portfolio, so people such as recruiters can try Curved without signing up.
+
+Demo mode is a setting on `main`, `CURVED_DEMO=true`, not a long-lived `live-demo` branch. A branch would fall behind `main`, collect merge conflicts, skip CI and break 0002's rule of short-lived branches. A setting ships in the same image and is tested on every pull request.
+
+In demo mode:
+
+- A demo account with sample data exists, and the sign-in page offers it, for example with a "Try the demo" button or filled-in credentials.
+- The demo account is a workspace `member`. Its credentials are public, so the instance admin is a separate account that only the maintainer knows.
+- A `demo:reset` command restores the sample data on a schedule, such as nightly, because every visitor shares the account and sees what the previous one wrote.
+- Features that can be abused are off: changing the password, sending email, invitations, creating workspaces and file uploads.
+- A short hint suggests opening two tabs to watch changes sync.
+
+The demo runs as its own Compose project, with its own name and volumes, so it never shares a database with the maintainer's personal instance. Tailscale Funnel makes it public at a `ts.net` address without a domain or open ports. Visitors do not need Tailscale.
+
+Risks: Funnel is in beta and has bandwidth limits that cannot be configured, which is enough for a few visitors. A laptop that sleeps takes the demo down, so keep it awake and use a free uptime check to alert the maintainer. Move the demo to a VPS or the cloud when the cloud provider is chosen, if it needs to be more reliable.
 
 ### Keeping cloud options open
 
@@ -221,6 +241,7 @@ For the MVP:
 - A self-hosting guide: minimum machine size, install, access from other devices, upgrade, backup, off-site copies, restore and replica rebuild. Measure the minimum size on the maintainer's instance. The estimate is 2–4GB of memory, not yet measured.
 - Test a restore and a replica rebuild on the maintainer's instance, and confirm that clients resync.
 - Turn on GitHub secret scanning and push protection.
+- Demo mode (`CURVED_DEMO`), its sample data and `demo:reset` command, a Compose setup for the demo, and its Tailscale Funnel and uptime check. Confirm that zero-cache's WebSocket works through Funnel.
 
 Later:
 
