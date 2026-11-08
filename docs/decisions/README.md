@@ -4,13 +4,14 @@ This folder holds Curved's architecture decision records (ADRs). Each record exp
 
 ## Records
 
-| Number                                  | Decision                | Status                              |
-| --------------------------------------- | ----------------------- | ----------------------------------- |
-| [0001](0001-tech-stack.md)              | Tech stack              | accepted, partly superseded by 0003 |
-| [0002](0002-development-conventions.md) | Development conventions | accepted, partly superseded by 0003 |
-| [0003](0003-defer-dco-and-renovate.md)  | Defer DCO and Renovate  | accepted                            |
-| [0004](0004-zero-spike-results.md)      | Zero spike results      | accepted                            |
-| [0005](0005-authentication.md)          | Authentication          | accepted                            |
+| Number                                     | Decision                    | Status                              |
+| ------------------------------------------ | --------------------------- | ----------------------------------- |
+| [0001](0001-tech-stack.md)                 | Tech stack                  | accepted, partly superseded by 0003 |
+| [0002](0002-development-conventions.md)    | Development conventions     | accepted, partly superseded by 0003 |
+| [0003](0003-defer-dco-and-renovate.md)     | Defer DCO and Renovate      | accepted                            |
+| [0004](0004-zero-spike-results.md)         | Zero spike results          | accepted                            |
+| [0005](0005-authentication.md)             | Authentication              | accepted                            |
+| [0008](0008-hosting-deploy-and-release.md) | Hosting, deploy and release | accepted                            |
 
 ## Writing a record
 
