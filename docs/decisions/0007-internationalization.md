@@ -20,6 +20,7 @@ Constraints:
 - Interface translation may come after the MVP.
 - The maintainer is the only translator and will not hire one, so Thai is the only other language we expect.
 - The maintainer prefers low long-term maintenance.
+- Thai and English are both written left to right. Right-to-left languages are out of scope.
 
 ## Considered options
 
@@ -47,6 +48,7 @@ Dates and numbers:
 - Format dates, numbers and relative times only through one helper module, `apps/web/src/lib/format.ts`, built on `Intl`. It caches formatter instances, because creating them for every row is slow with large lists. It keeps the locale, `en`, in one constant.
 - Prefer formats with month names, such as "Nov 8" and "Nov 8, 2026". Avoid all-numeric dates such as `11/8/2026`, which readers in Thailand may read as 11 August.
 - Times use the default of `en`, which is the 12-hour clock. Change it in the helper if needed.
+- Weeks start on Monday, as in ISO 8601, for date pickers and cycles. The default of US English is Sunday, so set it in the helper. A personal preference can follow.
 - Display times in the browser's time zone. Add a `user.time_zone` column with an IANA name, such as `Asia/Bangkok`, when a server feature first needs local time, such as reminder emails or daily digests.
 - Use no date library. Write the few date calculations we need, such as today, comparing due dates and adding days, as small helpers. Move to `Temporal` once Safari supports it. Chrome 144 and Firefox 139 already do, but the polyfill is about 160KB.
 - Store years in the Gregorian calendar.
@@ -69,6 +71,13 @@ Thai typography:
 - Split Thai text into words in JavaScript, for example to count words, highlight search matches or move the caret by word, only with `Intl.Segmenter`, never by spaces.
 - If Thai looks smaller than Geist next to it, tune it with `size-adjust` during implementation.
 
+Thai text handling:
+
+- Keyboard shortcuts must work while a Thai keyboard layout is active. With it, pressing the `C` key gives `event.key` as `แ`. Match `event.key` first, and fall back to `event.code`, the physical key, when `event.key` is not ASCII. This also keeps shortcuts right for other Latin layouts, such as AZERTY.
+- Thai vowels and tone marks are separate code points, so `.length` and `.slice()` can split a tone mark from its consonant. Count and cut characters for display, such as length limits and avatar initials, with `Intl.Segmenter` and `granularity: "grapheme"`. Avatar initials use the first grapheme that is not a leading vowel (เ แ โ ใ ไ).
+- Slugs and keys, such as `workspace.slug` and team keys like `ENG`, are ASCII only. When a name has no Latin letters, the user types the slug, or the app generates one. Display names can be any language.
+- Zero 1.11.3 sorts strings by their UTF-8 bytes, which is code point order, and has no collation option. Words that start with a leading vowel, such as "เกม", then sort after "ฮ" rather than under "ก", as a Thai dictionary would. Accept this for the MVP. Lists sorted only in the browser use `Intl.Collator`.
+
 ### When Thai is added
 
 This is the agreed direction. Check it against the ecosystem at that time and record any change in a new decision record.
@@ -90,6 +99,7 @@ This is the agreed direction. Check it against the ecosystem at that time and re
 - Good, because the library choice waits until it is needed, when the ecosystem may have changed. Paraglide 3.0 was released only on 2026-11-03.
 - Bad, because adding Thai later still means wrapping every interface string. For an MVP-sized interface this should take a day or two.
 - Bad, because nothing enforces whole-sentence strings or the formatting helper during the MVP. Code review must catch them.
+- Bad, because Thai titles in Zero-sorted lists follow code point order, not Thai dictionary order.
 - Neutral, because Thai search needs word segmentation, which [0001](0001-tech-stack.md) and [0004](0004-zero-spike-results.md) already leave to a separate decision.
 
 ## More information
