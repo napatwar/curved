@@ -1,4 +1,5 @@
 import type { Issue, Team, WorkflowState } from "@curved/zero";
+import { cn } from "cn";
 
 import { Button } from "@/components/ui/button";
 
@@ -20,12 +21,12 @@ export function IssueRow({
   const isDone = state?.category === "completed";
 
   return (
-    <li className="flex items-center justify-between gap-4 px-4 py-3">
+    <li className="flex h-9 items-center justify-between gap-4 px-4 hover:bg-muted/50">
       <span className="flex min-w-0 items-baseline gap-3">
         <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
           {issueKey(team?.key, issue.number)}
         </span>
-        <span className={isDone ? "text-muted-foreground line-through" : undefined}>
+        <span className={cn("truncate", isDone && "text-muted-foreground line-through")}>
           {issue.title}
         </span>
       </span>
