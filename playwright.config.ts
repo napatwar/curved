@@ -7,8 +7,9 @@ const apiPort = process.env.API_PORT ?? "3000";
 
 export default defineConfig({
   testDir: "./e2e",
-  // The Zero spike measurements run on their own: `pnpm test:spike`.
-  testIgnore: ["spike/**"],
+  // The Zero spike measurements (`pnpm test:spike`) and the production stack
+  // tests (`pnpm test:e2e:prod`) run on their own.
+  testIgnore: ["spike/**", "prod/**"],
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
@@ -21,7 +22,7 @@ export default defineConfig({
   webServer: [
     {
       command: "pnpm --filter @curved/api dev",
-      url: `http://localhost:${apiPort}/health`,
+      url: `http://localhost:${apiPort}/api/health`,
       reuseExistingServer: !process.env.CI,
     },
     {

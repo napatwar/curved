@@ -17,6 +17,7 @@
     "test:integration": "vitest run --project integration",
     "test:web": "vitest run --project web",
     "test:e2e": "playwright test",
+    "test:e2e:prod": "playwright test -c playwright.prod.config.ts",
     "test:spike": "playwright test -c playwright.spike.config.ts",
     "spike:clients": "tsx --env-file-if-exists=.env e2e/spike/concurrent-clients.ts",
     "spike:rebuild": "tsx e2e/spike/rebuild-replica.ts",

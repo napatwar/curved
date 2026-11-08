@@ -25,6 +25,9 @@ packages/zero/src/queries/     Zero queries, one file per domain
 packages/zero/src/mutators/    Zero mutators, one file per domain
 test/                  Shared test setup
 e2e/                   Playwright end-to-end tests
+e2e/prod/              End-to-end tests against the production Compose stack
+deploy/                Production Compose file, Caddyfile and .env.example
+Dockerfile             The curved image
 ```
 
 - Name feature folders after the domain, such as `issues` or `projects`, not after an action such as `create-issue`. When a domain grows, split it by screen area, such as `issues/board/`, not by action.
@@ -69,6 +72,8 @@ Route files follow TanStack Router's naming, such as `$issueId.tsx`.
 - Tables have `created_at` and `updated_at` as `timestamptz`. Zero exposes them as milliseconds.
 - Mutators set column values. Avoid database defaults on columns that Zero writes, because they make the columns optional in the Zero schema.
 - Never edit a migration that has been applied. Add a new one.
+- Every migration must work with the previous version of the app, because open browser tabs still run the previous Zero schema. Expand, then contract: add the new column or table and stop using the old one in one release, and drop or rename the old one in a later release. Never drop or rename a column in the same release that stops using it, even on a single-user instance.
+- There are no down migrations. To undo a release, restore a backup.
 - Add a table to the `zero_curved` publication in a migration only when clients need it.
 - Do not write app queries that join across workspaces.
 

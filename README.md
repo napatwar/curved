@@ -23,6 +23,7 @@ See [the decision records](docs/decisions/README.md) for the reasoning and limit
 | `packages/zero` | Generated Zero schema, plus queries and mutators shared by web and API |
 | `test`          | Shared test setup                                                      |
 | `e2e`           | End-to-end tests                                                       |
+| `deploy`        | Production Compose file, `Caddyfile` and settings for self-hosting     |
 
 ## Getting started
 
@@ -65,8 +66,9 @@ pnpm --filter @curved/api auth:reset-password person@example.com
 | `pnpm test:integration` | Run integration tests against Postgres             |
 | `pnpm test:web`         | Run web tests in Chromium                          |
 | `pnpm test:e2e`         | Run end-to-end tests; needs `pnpm infra:up`        |
+| `pnpm test:e2e:prod`    | Run end-to-end tests against the production stack  |
 | `pnpm db:seed`          | Add the development user, workspace and issue      |
-| `pnpm build`            | Build the web app                                  |
+| `pnpm build`            | Build the web app and the API bundle               |
 | `pnpm db:generate`      | Create a migration from `packages/db/src/schema`   |
 | `pnpm db:migrate`       | Apply migrations                                   |
 | `pnpm zero:generate`    | Regenerate the Zero schema from the Drizzle schema |
@@ -83,6 +85,10 @@ Integration tests use a `curved_test` database in the same Postgres. Set `TEST_D
 `WEB_PORT` and `API_PORT` let `pnpm test:e2e` run a second stack next to `pnpm dev`, for example from another worktree with its own database and `zero-cache`.
 
 `pnpm zero:generate` warns that `issue.id` has a database default. This is expected because mutators always send an `id`.
+
+## Self-hosting
+
+See [the self-hosting guide](docs/self-hosting.md). It runs the `curved` image, Postgres, `zero-cache` and Caddy with Docker Compose.
 
 ## License
 

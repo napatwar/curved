@@ -2,6 +2,7 @@
 // 0005). It prints a new random password and signs the user out everywhere.
 //
 //   pnpm --filter @curved/api auth:reset-password person@example.com
+//   docker compose exec curved node dist/reset-password.js person@example.com
 import { randomBytes } from "node:crypto";
 
 import { auth } from "../auth/auth";

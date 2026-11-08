@@ -13,7 +13,8 @@ export type OAuthCredentials = { clientId: string; clientSecret: string };
 
 export type AuthOptions = SignUpPolicy & {
   db: Db;
-  secret: string;
+  /** Better Auth uses a fixed development secret when this is unset. */
+  secret: string | undefined;
   /** The public URL of the web app. Auth routes are served under /api/auth. */
   baseURL: string;
   /** Parent domain that shares the session cookie, such as `example.com`. */

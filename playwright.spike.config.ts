@@ -18,7 +18,7 @@ export default defineConfig({
   webServer: [
     {
       command: "pnpm --filter @curved/api dev",
-      url: "http://localhost:3000/health",
+      url: "http://localhost:3000/api/health",
       reuseExistingServer: true,
     },
     {

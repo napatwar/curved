@@ -83,3 +83,49 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  image:
+    name: Docker image and production stack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      # Others build the image from source during the MVP, so every pull
+      # request builds it. Nothing is pushed.
+      - name: Build the curved image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: curved:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Configure the production stack
+        working-directory: deploy
+        run: |
+          cp .env.example .env
+          for name in POSTGRES_PASSWORD BETTER_AUTH_SECRET ZERO_ADMIN_PASSWORD; do
+            sed -i "s/^$name=\$/$name=$(openssl rand -hex 32)/" .env
+          done
+      # Uses the image built above, so Compose does not build it again.
+      - run: docker compose -f deploy/docker-compose.yml up -d --wait --wait-timeout 300
+      - run: pnpm test:e2e:prod
+      - name: Show service logs
+        if: failure()
+        run: docker compose -f deploy/docker-compose.yml logs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: playwright-report-prod
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
