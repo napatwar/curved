@@ -1,5 +1,6 @@
 import { mutators, queries } from "@curved/zero";
 import { useConnectionState, useQuery, useZero } from "@rocicorp/zero/react";
+import { useState } from "react";
 import { v7 as uuidv7 } from "uuid";
 
 import { useCanWrite } from "@/hooks/use-can-write";
@@ -12,6 +13,19 @@ export function IssueList({ workspaceId }: { workspaceId: string }) {
   const connection = useConnectionState();
   const canWrite = useCanWrite();
   const [issues] = useQuery(queries.issues.byWorkspace({ workspaceId }));
+  const [error, setError] = useState<string | null>(null);
+
+  // Zero has already applied the change locally. When the server rejects it
+  // (an "app" error), Zero rolls the change back and this shows why. A "zero"
+  // error means the connection was lost: the change stays queued and is sent
+  // after reconnecting, so it is not reported as lost.
+  async function mutate(request: Parameters<typeof zero.mutate>[0]) {
+    setError(null);
+    const result = await zero.mutate(request).server;
+    if (result.type === "error" && result.error.type === "app") {
+      setError(`Change not saved: ${result.error.message}`);
+    }
+  }
 
   return (
     <>
@@ -23,9 +37,15 @@ export function IssueList({ workspaceId }: { workspaceId: string }) {
       <CreateIssueForm
         disabled={!canWrite}
         onCreate={(title) =>
-          zero.mutate(mutators.issues.create({ id: uuidv7(), workspaceId, title }))
+          void mutate(mutators.issues.create({ id: uuidv7(), workspaceId, title }))
         }
       />
+
+      {error && (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      )}
 
       <ul className="divide-y rounded-lg border">
         {issues.map((issue) => (
@@ -34,7 +54,7 @@ export function IssueList({ workspaceId }: { workspaceId: string }) {
             issue={issue}
             key={issue.id}
             onToggleStatus={() =>
-              zero.mutate(
+              void mutate(
                 mutators.issues.setStatus({
                   id: issue.id,
                   status: issue.status === "done" ? "todo" : "done",

@@ -13,11 +13,13 @@
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "seed": "tsx --env-file-if-exists=../../.env src/seed.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "seed:spike": "tsx --env-file-if-exists=../../.env src/seed-spike.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "uuid": "^14.0.3"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
