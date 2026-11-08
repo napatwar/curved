@@ -69,8 +69,16 @@ services:
     environment:
       DATABASE_URL: *database-url
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in .env}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?set BETTER_AUTH_URL in .env}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       # Optional. Listed without a value, so they stay unset unless .env sets them.
+      AUTH_OPEN_SIGN_UP:
+      SMTP_URL:
+      SMTP_FROM:
+      GOOGLE_CLIENT_ID:
+      GOOGLE_CLIENT_SECRET:
+      GITHUB_CLIENT_ID:
+      GITHUB_CLIENT_SECRET:
       SENTRY_DSN:
       SENTRY_ENVIRONMENT:
     healthcheck:

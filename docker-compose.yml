@@ -32,6 +32,9 @@ services:
       # The API runs on the host during development.
       ZERO_QUERY_URL: http://host.docker.internal:3000/api/zero/query
       ZERO_MUTATE_URL: http://host.docker.internal:3000/api/zero/mutate
+      # The API reads the Better Auth session from the browser's cookie.
+      ZERO_QUERY_FORWARD_COOKIES: "true"
+      ZERO_MUTATE_FORWARD_COOKIES: "true"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

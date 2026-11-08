@@ -2,6 +2,8 @@ import { issueStatuses } from "@curved/db/constants";
 import { defineMutator } from "@rocicorp/zero";
 import { z } from "zod";
 
+import { assertMember, assertMemberOfRow } from "../auth";
+
 export const createIssueArgs = z.object({
   id: z.uuid(),
   workspaceId: z.uuid(),
@@ -14,7 +16,8 @@ export const setIssueStatusArgs = z.object({
 });
 
 export const issueMutators = {
-  create: defineMutator(createIssueArgs, async ({ args: { id, workspaceId, title }, tx }) => {
+  create: defineMutator(createIssueArgs, async ({ args: { id, workspaceId, title }, ctx, tx }) => {
+    await assertMember(tx, ctx, workspaceId);
     const now = Date.now();
     await tx.mutate.issue.insert({
       id,
@@ -25,7 +28,8 @@ export const issueMutators = {
       updatedAt: now,
     });
   }),
-  setStatus: defineMutator(setIssueStatusArgs, async ({ args: { id, status }, tx }) => {
+  setStatus: defineMutator(setIssueStatusArgs, async ({ args: { id, status }, ctx, tx }) => {
+    await assertMemberOfRow(tx, ctx, "issue", id);
     await tx.mutate.issue.update({ id, status, updatedAt: Date.now() });
   }),
 };

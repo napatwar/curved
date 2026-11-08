@@ -1,14 +1,15 @@
-import { createDb } from "@curved/db";
+import type { Db } from "@curved/db";
 import { schema } from "@curved/zero";
 import { zeroDrizzle } from "@rocicorp/zero/server/adapters/drizzle";
 
-import { env } from "../env";
+export function createDbProvider(db: Db) {
+  return zeroDrizzle(schema, db);
+}
 
-export const db = createDb(env.DATABASE_URL);
-export const dbProvider = zeroDrizzle(schema, db);
+export type DbProvider = ReturnType<typeof createDbProvider>;
 
 declare module "@rocicorp/zero" {
   interface DefaultTypes {
-    dbProvider: typeof dbProvider;
+    dbProvider: DbProvider;
   }
 }

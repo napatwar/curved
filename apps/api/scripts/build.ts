@@ -43,7 +43,11 @@ const externalDependencies: Plugin = {
 };
 
 await build({
-  entryPoints: { server: "src/index.ts", migrate: "src/migrate.ts" },
+  entryPoints: {
+    server: "src/index.ts",
+    migrate: "src/migrate.ts",
+    "reset-password": "src/cli/reset-password.ts",
+  },
   outdir: "dist",
   bundle: true,
   platform: "node",

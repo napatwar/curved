@@ -10,6 +10,8 @@ import { defineConfig, devices } from "@playwright/test";
 // CURVED_URL overrides the address, such as http://localhost:8080.
 export default defineConfig({
   testDir: "./e2e/prod",
+  // Signs up the first user (the instance admin) and creates a workspace.
+  globalSetup: "./e2e/prod/global-setup.ts",
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,

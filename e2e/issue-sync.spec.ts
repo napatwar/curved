@@ -1,14 +1,14 @@
 import { expect, test } from "@playwright/test";
 
+import { signIn } from "./helpers";
+
 test("an issue syncs between two browsers", async ({ browser }) => {
   const first = await (await browser.newContext()).newPage();
   const second = await (await browser.newContext()).newPage();
   const title = `Sync check ${Date.now()}`;
 
-  await first.goto("/");
-  await second.goto("/");
-  await expect(first.getByText("connected")).toBeVisible();
-  await expect(second.getByText("connected")).toBeVisible();
+  await signIn(first);
+  await signIn(second);
 
   await first.getByLabel("Issue title").fill(title);
   await first.getByRole("button", { name: "Add" }).click();

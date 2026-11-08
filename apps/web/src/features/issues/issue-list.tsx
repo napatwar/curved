@@ -1,5 +1,5 @@
 import { mutators, queries } from "@curved/zero";
-import { useConnectionState, useQuery, useZero } from "@rocicorp/zero/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
 import { useState } from "react";
 import { v7 as uuidv7 } from "uuid";
 
@@ -10,7 +10,6 @@ import { IssueRow } from "./issue-row";
 
 export function IssueList({ workspaceId }: { workspaceId: string }) {
   const zero = useZero();
-  const connection = useConnectionState();
   const canWrite = useCanWrite();
   const [issues] = useQuery(queries.issues.byWorkspace({ workspaceId }));
   const [error, setError] = useState<string | null>(null);
@@ -29,10 +28,7 @@ export function IssueList({ workspaceId }: { workspaceId: string }) {
 
   return (
     <>
-      <header className="flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold">Curved</h1>
-        <span className="text-sm text-muted-foreground">{connection.name}</span>
-      </header>
+      <h1 className="sr-only">Issues</h1>
 
       <CreateIssueForm
         disabled={!canWrite}

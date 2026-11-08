@@ -2,7 +2,7 @@
 
 An open-source task management tool for teams, with Linear as its reference product.
 
-Curved is at a very early stage. It currently has one `issue` table and no authentication, so run it only on a trusted network.
+Curved is at a very early stage. It has sign-in and workspaces, and an `issue` table from the Zero spike.
 
 ## Stack
 
@@ -45,7 +45,15 @@ pnpm infra:up
 pnpm dev
 ```
 
-Open <http://localhost:5173>. `pnpm infra:up` starts Postgres, applies migrations, adds seed data and starts `zero-cache`.
+Open <http://localhost:5173> and sign in as `dev@example.com` with the password `curved-dev-password`. `pnpm infra:up` starts Postgres, applies migrations, adds seed data and starts `zero-cache`. The seed creates this user as the instance admin, with a workspace called Curved.
+
+On a new instance without seed data, the first person to sign up becomes the instance admin and sign-up then closes. Others join by invitation. See `apps/api/src/env.ts` for the sign-in options, such as Google, GitHub and SMTP.
+
+If an instance has no SMTP, an instance admin resets a password with:
+
+```bash
+pnpm --filter @curved/api auth:reset-password person@example.com
+```
 
 ## Common commands
 
@@ -59,6 +67,7 @@ Open <http://localhost:5173>. `pnpm infra:up` starts Postgres, applies migration
 | `pnpm test:web`         | Run web tests in Chromium                          |
 | `pnpm test:e2e`         | Run end-to-end tests; needs `pnpm infra:up`        |
 | `pnpm test:e2e:prod`    | Run end-to-end tests against the production stack  |
+| `pnpm db:seed`          | Add the development user, workspace and issue      |
 | `pnpm build`            | Build the web app and the API bundle               |
 | `pnpm db:generate`      | Create a migration from `packages/db/src/schema`   |
 | `pnpm db:migrate`       | Apply migrations                                   |
@@ -72,6 +81,8 @@ pnpm exec playwright install chromium
 ```
 
 Integration tests use a `curved_test` database in the same Postgres. Set `TEST_DATABASE_URL` to use another one.
+
+`WEB_PORT` and `API_PORT` let `pnpm test:e2e` run a second stack next to `pnpm dev`, for example from another worktree with its own database and `zero-cache`.
 
 `pnpm zero:generate` warns that `issue.id` has a database default. This is expected because mutators always send an `id`.
 

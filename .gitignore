@@ -19,4 +19,6 @@ dist/
 playwright-report/
 test-results/
 spike-results/
+.vitest/
 deploy/backups/
+e2e/**/.auth/

@@ -2,6 +2,7 @@ import { issueStatuses } from "@curved/db/constants";
 import { defineQuery } from "@rocicorp/zero";
 import { z } from "zod";
 
+import { whereMember } from "../auth";
 import { zql } from "../schema.gen";
 
 export const issueFilterArgs = z.object({
@@ -22,13 +23,15 @@ function containsPattern(text: string) {
 }
 
 export const issueQueries = {
-  byWorkspace: defineQuery(z.object({ workspaceId: z.uuid() }), ({ args: { workspaceId } }) =>
-    zql.issue.where("workspaceId", workspaceId).orderBy("createdAt", "desc").orderBy("id", "desc"),
+  byWorkspace: defineQuery(z.object({ workspaceId: z.uuid() }), ({ args: { workspaceId }, ctx }) =>
+    whereMember(zql.issue.where("workspaceId", workspaceId), ctx)
+      .orderBy("createdAt", "desc")
+      .orderBy("id", "desc"),
   ),
   // Added for the Zero spike (decision record 0004) to measure filter and sort
   // changes. No screen uses it yet.
-  byFilter: defineQuery(issueFilterArgs, ({ args }) => {
-    let query = zql.issue.where("workspaceId", args.workspaceId);
+  byFilter: defineQuery(issueFilterArgs, ({ args, ctx }) => {
+    let query = whereMember(zql.issue.where("workspaceId", args.workspaceId), ctx);
     if (args.statuses) {
       query = query.where("status", "IN", args.statuses);
     }

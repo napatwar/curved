@@ -6,8 +6,9 @@
 #   docker build -t curved:local .
 #
 # Commands:
-#   node dist/server.js    API and web app on port 3000 (default)
-#   node dist/migrate.js   Applies pending migrations and exits
+#   node dist/server.js                   API and web app on port 3000 (default)
+#   node dist/migrate.js                  Applies pending migrations and exits
+#   node dist/reset-password.js <email>   Prints a new password for a user
 
 FROM node:24-slim AS base
 ENV PNPM_HOME=/pnpm \

@@ -1,8 +1,8 @@
+import { sql } from "@curved/db/orm";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { sql } from "drizzle-orm";
 
+import { db } from "../db";
 import { logger } from "../logger";
-import { db } from "../zero/db-provider";
 
 export const healthRoutes = new OpenAPIHono();
 

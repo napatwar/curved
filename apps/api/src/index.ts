@@ -1,10 +1,10 @@
 import { serve } from "@hono/node-server";
 
 import { app } from "./app";
+import { db } from "./db";
 import { env } from "./env";
 import { flushErrorReporting, initErrorReporting } from "./error-reporting";
 import { logger } from "./logger";
-import { db } from "./zero/db-provider";
 
 // Docker waits 20 seconds (stop_grace_period) before it kills the container.
 const shutdownTimeoutMs = 10_000;

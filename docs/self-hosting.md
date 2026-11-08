@@ -3,7 +3,7 @@
 This guide runs Curved on your own machine with Docker Compose. [Decision record 0008](decisions/0008-hosting-deploy-and-release.md) explains the choices behind it.
 
 > [!WARNING]
-> Curved has no sign-in yet. Anyone who can open its address can read and change every issue. Until sign-in ships ([0005](decisions/0005-authentication.md)), keep it on `localhost` or a private network such as your tailnet, and never expose it to the internet.
+> Curved is at an early stage and has had no security review. Prefer `localhost` or a private network such as your tailnet over a public address.
 
 ## What runs
 
@@ -72,7 +72,7 @@ The first build takes several minutes. Check that every service is up and health
 docker compose ps -a
 ```
 
-The default settings serve Curved at <http://localhost>.
+The default settings serve Curved at <http://localhost>. Open it and create your account: see [Sign-in and users](#sign-in-and-users).
 
 ## Access
 
@@ -82,6 +82,7 @@ Two settings in `.env` control this:
 
 - `CURVED_DOMAIN`: the host name people type, without `https://`.
 - `CADDY_SITE_ADDRESS`: how Caddy serves it. Leave it empty for Caddy to get a Let's Encrypt certificate for `CURVED_DOMAIN`. An `http://` address or `:80` serves plain HTTP.
+- `BETTER_AUTH_URL`: the full address people open, such as `https://curved.example.com`. Sign-in accepts requests only from this address, and an `https://` address makes the session cookie `Secure`.
 
 After changing `.env`, apply it with `docker compose up -d`.
 
@@ -92,6 +93,7 @@ The defaults:
 ```dotenv
 CURVED_DOMAIN=localhost
 CADDY_SITE_ADDRESS=http://localhost
+BETTER_AUTH_URL=http://localhost
 ```
 
 ### Other devices, through Tailscale
@@ -103,6 +105,7 @@ Let Caddy serve plain HTTP on a local port, and let Tailscale Serve handle HTTPS
 ```dotenv
 CURVED_DOMAIN=<machine>.<tailnet>.ts.net
 CADDY_SITE_ADDRESS=:80
+BETTER_AUTH_URL=https://<machine>.<tailnet>.ts.net
 HTTP_PORT=127.0.0.1:8080
 HTTPS_PORT=127.0.0.1:8443
 ```
@@ -117,9 +120,9 @@ Open `https://<machine>.<tailnet>.ts.net` from any device on your tailnet. A lap
 
 ### Other devices, through Cloudflare Tunnel
 
-With a domain on Cloudflare, [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) also needs no open ports. Use the same `.env` as for Tailscale, with your domain in `CURVED_DOMAIN`, and point the tunnel's public hostname at `http://127.0.0.1:8080`. Cloudflare passes WebSockets through by default.
+With a domain on Cloudflare, [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) also needs no open ports. Use the same `.env` as for Tailscale, with your domain in `CURVED_DOMAIN` and `https://<your domain>` in `BETTER_AUTH_URL`, and point the tunnel's public hostname at `http://127.0.0.1:8080`. Cloudflare passes WebSockets through by default.
 
-Do not do this until sign-in exists: a tunnel makes Curved public.
+A tunnel makes Curved public, so create your own account before you turn it on: the first person to sign up becomes the instance admin.
 
 ### A public server with its own domain
 
@@ -128,11 +131,32 @@ Point the domain's DNS at the server, open ports 80 and 443, and let Caddy get a
 ```dotenv
 CURVED_DOMAIN=curved.example.com
 CADDY_SITE_ADDRESS=
+BETTER_AUTH_URL=https://curved.example.com
 ```
 
 ### Behind an existing reverse proxy
 
 If Traefik, nginx or another proxy already handles HTTPS on the machine, use the Tailscale settings above and point that proxy at `http://127.0.0.1:8080`. The proxy must pass WebSockets on `/zero/`.
+
+## Sign-in and users
+
+Curved signs people in with email and password ([0005](decisions/0005-authentication.md)).
+
+- **The first person to sign up becomes the instance admin.** Sign up right after the first start, before anyone else can reach the address.
+- **Sign-up then closes.** New people join by invitation to a workspace, and can sign up only with the invited email address. To let anyone sign up, set `AUTH_OPEN_SIGN_UP=true`.
+- **Only the instance admin creates workspaces.** After signing up, the admin creates the first one. Workspace owners and admins invite people. The app has no members screen yet, so inviting needs Better Auth's API (`POST /api/auth/organization/invite-member`) for now. The invited person opens `<BETTER_AUTH_URL>/invitations/<invitation ID>`.
+- **Without SMTP**, Curved sends no email: invitation links are shared by hand, email addresses are not verified, and the instance admin resets a forgotten password from the server:
+
+  ```bash
+  docker compose exec curved node dist/reset-password.js person@example.com
+  ```
+
+  It prints a new password and signs that person out everywhere.
+
+- **With SMTP** (`SMTP_URL` and `SMTP_FROM`), Curved emails invitations, asks people to verify their email address before they sign in, and sends password reset links.
+- **Google and GitHub sign-in** are off. Turn one on by creating an OAuth app with the redirect URL `<BETTER_AUTH_URL>/api/auth/callback/google` (or `/github`) and setting `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (or `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`).
+
+Apply changes to these settings with `docker compose up -d`.
 
 ## Upgrade
 
@@ -283,6 +307,8 @@ Curved collects no telemetry. zero-cache sends anonymous usage data to Rocicorp 
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `docker compose` says a variable must be set           | Fill in the secrets in `.env`.                                                                                         |
 | `curved` restarts with `invalid environment variables` | `docker compose logs curved` names the setting. Secrets need 32 or more characters and must not be development values. |
+| Sign-in fails with `Invalid origin`                    | `BETTER_AUTH_URL` must be exactly the address in the browser's address bar, including `http://` or `https://`.         |
+| The app shows "Cannot reach your data"                 | zero-cache did not forward the session cookie. Check that the browser opened `BETTER_AUTH_URL` and not another name.   |
 | The app shows `disconnected`                           | `docker compose logs zero-cache`. The first start copies the replica and can take a minute.                            |
 | Caddy returns an empty page                            | The address you opened does not match `CADDY_SITE_ADDRESS`. Behind another proxy, use `:80`.                           |
 | Port 80 or 443 is in use                               | Set `HTTP_PORT` and `HTTPS_PORT` to free ports.                                                                        |

@@ -47,6 +47,7 @@
     "playwright": "^1.65.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
+    "uuid": "^14.0.3",
     "vitest": "^5.1.0",
     "vitest-browser-react": "^2.3.0"
   },
