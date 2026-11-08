@@ -167,11 +167,15 @@ services:
     command:
       - |
         umask 077
+        # bash as PID 1 ignores SIGTERM, so stop on it explicitly. Sleeping in
+        # the background lets the trap run without waiting for sleep to end.
+        trap 'exit 0' TERM INT
         echo "backup: daily at $$BACKUP_TIME $$TZ, keeping $$BACKUP_KEEP_DAYS days"
         while true; do
           next=$$(date -d "today $$BACKUP_TIME" +%s)
           [ "$$next" -gt "$$(date +%s)" ] || next=$$(date -d "tomorrow $$BACKUP_TIME" +%s)
-          sleep $$(( next - $$(date +%s) ))
+          sleep $$(( next - $$(date +%s) )) &
+          wait $$!
           file="/backups/curved-$$(date +%Y%m%d-%H%M%S).dump"
           if pg_dump -Fc -f "$$file.partial"; then
             mv "$$file.partial" "$$file"
