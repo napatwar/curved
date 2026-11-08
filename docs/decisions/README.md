@@ -10,6 +10,7 @@ This folder holds Curved's architecture decision records (ADRs). Each record exp
 | [0002](0002-development-conventions.md) | Development conventions | accepted, partly superseded by 0003 |
 | [0003](0003-defer-dco-and-renovate.md)  | Defer DCO and Renovate  | accepted                            |
 | [0004](0004-zero-spike-results.md)      | Zero spike results      | accepted                            |
+| [0005](0005-authentication.md)          | Authentication          | accepted                            |
 
 ## Writing a record
 
