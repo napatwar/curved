@@ -12,6 +12,7 @@ This folder holds Curved's architecture decision records (ADRs). Each record exp
 | [0004](0004-zero-spike-results.md)         | Zero spike results         | accepted                            |
 | [0005](0005-authentication.md)             | Authentication             | accepted                            |
 | [0006](0006-mvp-scope-and-domain-model.md) | MVP scope and domain model | accepted                            |
+| [0007](0007-internationalization.md)       | Internationalization       | accepted                            |
 
 ## Writing a record
 
