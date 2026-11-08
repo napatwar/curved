@@ -15,6 +15,9 @@ import { recordResult, summarize } from "./results";
 
 const CACHE_URL = process.env.VITE_ZERO_CACHE_URL ?? "http://localhost:4848";
 const WORKSPACE_ID = "00000000-0000-7000-8000-000000000001";
+// Since authentication (decision record 0005), zero-cache needs a session
+// cookie, which these Node.js clients do not send yet, so they get 401.
+const USER_ID = "00000000-0000-7000-8000-000000000011";
 const CLIENTS = Number(process.env.SPIKE_CLIENTS ?? 50);
 const WORKERS = 5;
 const IDLE_MS = 30_000;
@@ -40,6 +43,8 @@ function createClient() {
     mutators,
     kvStore: "mem",
     storageKey: crypto.randomUUID(),
+    userID: USER_ID,
+    context: { userID: USER_ID },
   });
 }
 

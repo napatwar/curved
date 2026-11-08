@@ -4,7 +4,8 @@
 import { eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
-import { DEV_WORKSPACE_ID, type IssueStatus } from "./constants";
+import type { IssueStatus } from "./constants";
+import { DEV_WORKSPACE_ID } from "./dev";
 import { createDb } from "./index";
 import { comment, issue } from "./schema";
 

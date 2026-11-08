@@ -64,6 +64,7 @@
     {
       "files": [
         "apps/api/src/index.ts",
+        "apps/api/src/cli/**",
         "packages/db/src/seed.ts",
         "packages/db/src/seed-spike.ts",
         "e2e/**"

@@ -7,6 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",
+    "./dev": "./src/dev.ts",
+    "./orm": "./src/orm.ts",
     "./schema": "./src/schema/index.ts"
   },
   "scripts": {
@@ -24,6 +26,7 @@
   "devDependencies": {
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
+    "better-auth": "1.7.18",
     "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
