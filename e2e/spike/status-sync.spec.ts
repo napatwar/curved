@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import {
   observePage,
   recordResult,
+  signIn,
   summarize,
   waitForRows,
   watchFirstRow,
@@ -18,7 +19,7 @@ test("a state change shows locally at once and in another browser within 1 secon
     [0, 1].map(async () => {
       const page = await (await browser.newContext()).newPage();
       await observePage(page);
-      await page.goto("/");
+      await signIn(page);
       await waitForRows(page);
       return page;
     }),

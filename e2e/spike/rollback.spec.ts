@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { observePage, recordResult, sql, waitForRows, WORKSPACE_ID } from "./support";
+import { observePage, recordResult, signIn, sql, waitForRows, WORKSPACE_ID } from "./support";
 
 const TITLE = `Spike rollback check ${Date.now()}`;
 let issueId = "";
@@ -36,7 +36,7 @@ test.afterAll(async () => {
 
 test("a rejected mutation rolls back and shows the error", async ({ page }) => {
   await observePage(page);
-  await page.goto("/");
+  await signIn(page);
   await waitForRows(page);
   const row = page.locator("main ul > li").filter({ hasText: TITLE });
   await expect(row.locator("button")).toHaveText("Done");

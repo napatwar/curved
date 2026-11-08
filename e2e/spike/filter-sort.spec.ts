@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { observePage, recordResult, sql, waitForRows, WORKSPACE_ID } from "./support";
+import { observePage, recordResult, signIn, sql, waitForRows, WORKSPACE_ID } from "./support";
 
 const DAY_MS = 86_400_000;
 const now = Date.now();
@@ -38,7 +38,7 @@ const cases: { name: string; args: Record<string, unknown> }[] = [
 
 test("filter and sort changes", async ({ page }) => {
   await observePage(page);
-  await page.goto("/");
+  await signIn(page);
   await waitForRows(page);
   const [counted] = await sql<{ count: string }>(
     "select count(*) from issue where workspace_id = $1",

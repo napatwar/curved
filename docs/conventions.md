@@ -33,7 +33,8 @@ Dockerfile             The curved image
 - Name feature folders after the domain, such as `issues` or `projects`, not after an action such as `create-issue`. When a domain grows, split it by screen area, such as `issues/board/`, not by action.
 - Each feature exposes what other features may use through its `index.ts`.
 - Register every domain's queries in `packages/zero/src/queries/index.ts` and every domain's mutators in `packages/zero/src/mutators/index.ts`. Zero requires one top-level `defineQueries` call.
-- Put server-only mutator logic, such as sending notifications, in `apps/api`, so it never reaches the browser bundle.
+- Put server-only mutator logic, such as allocating issue numbers or sending notifications, in `apps/api`, so it never reaches the browser bundle. Override the shared mutator in `apps/api/src/zero/server-mutators.ts`.
+- Every query limits rows with `whereMember`, and every issue list also uses `whereActive`, `whereArchived` or `whereTrashed`. All four live in `packages/zero/src/auth`.
 
 ## Imports
 
@@ -69,7 +70,10 @@ Route files follow TanStack Router's naming, such as `$issueId.tsx`.
 
 - Every tenant table has `workspace_id`.
 - Primary keys are `id` with UUIDv7. The client generates the `id` when it inserts through Zero.
+- Two kinds of table are the exception. A junction table uses its two foreign keys as the primary key, such as `issue_label (issue_id, label_id)`, so two clients that add the same pair make an idempotent upsert. A 1:1 table uses its foreign key, such as `issue_description (issue_id)`. Both still have `workspace_id`.
+- Sort keys for manual ordering come from the `fractional-indexing` package and are `text COLLATE "C"`. Use the `sortKey` column type in `packages/db/src/schema/columns.ts`, and order by the key, then `id`. Postgres's default collations order letter case differently from the SQLite replica and JavaScript.
 - Tables have `created_at` and `updated_at` as `timestamptz`. Zero exposes them as milliseconds.
+- A calendar date, such as a due date, is a Postgres `date`. Zero exposes it as milliseconds at UTC midnight, and mutators accept only such values.
 - Mutators set column values. Avoid database defaults on columns that Zero writes, because they make the columns optional in the Zero schema.
 - Never edit a migration that has been applied. Add a new one.
 - Every migration must work with the previous version of the app, because open browser tabs still run the previous Zero schema. Expand, then contract: add the new column or table and stop using the old one in one release, and drop or rename the old one in a later release. Never drop or rename a column in the same release that stops using it, even on a single-user instance.

@@ -44,10 +44,9 @@ function workspaceIssues(workspaceId: string, ctx: ZeroContext) {
   return whereMember(zql.issue.where("workspaceId", workspaceId), ctx);
 }
 
-/** What an issue row in a list shows: its state, for the category, and its team, for the key. */
-function listRow<TReturn>(query: Query<"issue", Schema, TReturn>) {
-  return query.related("state").related("team");
-}
+// Lists return plain issue rows. A view looks up each issue's team and state
+// in `teams.byWorkspace`, which has every team and state. Relating them on
+// every row made the first load of 20,000 issues about 30% slower.
 
 function newestFirst<TReturn>(query: Query<"issue", Schema, TReturn>) {
   return query.orderBy("createdAt", "desc").orderBy("id", "desc");
@@ -86,35 +85,33 @@ function issueDetails<TReturn>(query: Query<"issue", Schema, TReturn>) {
 export const issueQueries = {
   /** Active issues in a workspace, newest first. */
   byWorkspace: defineQuery(workspaceArgs, ({ args: { workspaceId }, ctx }) =>
-    newestFirst(listRow(whereActive(workspaceIssues(workspaceId, ctx)))),
+    newestFirst(whereActive(workspaceIssues(workspaceId, ctx))),
   ),
 
   /** Active issues in a team, in Manual order. */
   byTeam: defineQuery(
     z.object({ workspaceId: z.uuid(), teamId: z.uuid() }),
     ({ args: { workspaceId, teamId }, ctx }) =>
-      listRow(whereActive(workspaceIssues(workspaceId, ctx).where("teamId", teamId)))
+      whereActive(workspaceIssues(workspaceId, ctx).where("teamId", teamId))
         .orderBy("sortOrder", "asc")
         .orderBy("id", "asc"),
   ),
 
   /** My issues: active issues assigned to the signed-in user. */
   mine: defineQuery(workspaceArgs, ({ args: { workspaceId }, ctx }) =>
-    newestFirst(
-      listRow(whereActive(workspaceIssues(workspaceId, ctx).where("assigneeId", ctx.userID))),
-    ),
+    newestFirst(whereActive(workspaceIssues(workspaceId, ctx).where("assigneeId", ctx.userID))),
   ),
 
   /** Archived issues, for the "Show archived" filter. */
   archived: defineQuery(workspaceArgs, ({ args: { workspaceId }, ctx }) =>
-    listRow(whereArchived(workspaceIssues(workspaceId, ctx)))
+    whereArchived(workspaceIssues(workspaceId, ctx))
       .orderBy("archivedAt", "desc")
       .orderBy("id", "desc"),
   ),
 
   /** Issues in the Trash, most recently trashed first. */
   trashed: defineQuery(workspaceArgs, ({ args: { workspaceId }, ctx }) =>
-    listRow(whereTrashed(workspaceIssues(workspaceId, ctx)))
+    whereTrashed(workspaceIssues(workspaceId, ctx))
       .orderBy("deletedAt", "desc")
       .orderBy("id", "desc"),
   ),
@@ -192,10 +189,7 @@ export const issueQueries = {
         comments.where("body", "ILIKE", containsPattern(commentContains)),
       );
     }
-    return listRow(query)
-      .orderBy(args.sort, args.direction)
-      .orderBy("id", args.direction)
-      .limit(args.limit);
+    return query.orderBy(args.sort, args.direction).orderBy("id", args.direction).limit(args.limit);
   }),
 };
 

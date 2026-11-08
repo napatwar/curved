@@ -1,8 +1,8 @@
-import type { WorkflowState } from "@curved/zero";
+import type { Issue, Team, WorkflowState } from "@curved/zero";
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
-import { IssueRow, type IssueRowData } from "./issue-row";
+import { IssueRow } from "./issue-row";
 
 const workspaceId = "00000000-0000-7000-8000-000000000001";
 const teamId = "00000000-0000-7000-8000-000000000021";
@@ -21,7 +21,7 @@ function state(category: WorkflowState["category"]): WorkflowState {
   };
 }
 
-const issue: IssueRowData = {
+const issue: Issue = {
   id: "01a1a796-94af-7420-9b34-229390fd4fc9",
   workspaceId,
   teamId,
@@ -38,17 +38,17 @@ const issue: IssueRowData = {
   deletedAt: null,
   createdAt: 0,
   updatedAt: 0,
-  state: state("unstarted"),
-  team: {
-    id: teamId,
-    workspaceId,
-    key: "ENG",
-    name: "Engineering",
-    nextIssueNumber: 13,
-    defaultStateId: state("unstarted").id,
-    createdAt: 0,
-    updatedAt: 0,
-  },
+};
+
+const team: Team = {
+  id: teamId,
+  workspaceId,
+  key: "ENG",
+  name: "Engineering",
+  nextIssueNumber: 13,
+  defaultStateId: state("unstarted").id,
+  createdAt: 0,
+  updatedAt: 0,
 };
 
 describe("IssueRow", () => {
@@ -56,7 +56,13 @@ describe("IssueRow", () => {
     const onToggleDone = vi.fn<() => void>();
     const screen = await render(
       <ul>
-        <IssueRow disabled={false} issue={issue} onToggleDone={onToggleDone} />
+        <IssueRow
+          disabled={false}
+          issue={issue}
+          onToggleDone={onToggleDone}
+          state={state("unstarted")}
+          team={team}
+        />
       </ul>,
     );
 
@@ -71,8 +77,10 @@ describe("IssueRow", () => {
       <ul>
         <IssueRow
           disabled={false}
-          issue={{ ...issue, state: state("completed") }}
+          issue={issue}
           onToggleDone={() => {}}
+          state={state("completed")}
+          team={team}
         />
       </ul>,
     );
@@ -83,7 +91,13 @@ describe("IssueRow", () => {
   it("shows a pending key until the server assigns the number", async () => {
     const screen = await render(
       <ul>
-        <IssueRow disabled={false} issue={{ ...issue, number: 0 }} onToggleDone={() => {}} />
+        <IssueRow
+          disabled={false}
+          issue={{ ...issue, number: 0 }}
+          onToggleDone={() => {}}
+          state={state("unstarted")}
+          team={team}
+        />
       </ul>,
     );
 

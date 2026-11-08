@@ -1,12 +1,12 @@
 import { mutators, queries } from "@curved/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { v7 as uuidv7 } from "uuid";
 
 import { useCanWrite } from "@/hooks/use-can-write";
 
 import { CreateIssueForm } from "./create-issue-form";
-import { IssueRow, type IssueRowData } from "./issue-row";
+import { IssueRow } from "./issue-row";
 
 export function IssueList({ workspaceId }: { workspaceId: string }) {
   const zero = useZero();
@@ -17,6 +17,13 @@ export function IssueList({ workspaceId }: { workspaceId: string }) {
   // Every workspace has at least one team. With one team, the UI hides teams
   // (decision record 0006), so new issues go to the first one.
   const [team] = teams;
+  // List queries return plain issue rows; their teams and states come from
+  // the few rows of `teams.byWorkspace`.
+  const teamsById = useMemo(() => new Map(teams.map((row) => [row.id, row])), [teams]);
+  const statesById = useMemo(
+    () => new Map(teams.flatMap((row) => row.states.map((state) => [state.id, state]))),
+    [teams],
+  );
 
   // Zero has already applied the change locally. When the server rejects it
   // (an "app" error), Zero rolls the change back and this shows why. A "zero"
@@ -32,10 +39,10 @@ export function IssueList({ workspaceId }: { workspaceId: string }) {
 
   // Done moves an issue to its team's first completed state, and Reopen to
   // the team's default state. App logic uses the category, never the name.
-  function toggleDone(issue: IssueRowData) {
-    const issueTeam = teams.find((candidate) => candidate.id === issue.teamId);
+  function toggleDone(issue: (typeof issues)[number]) {
+    const issueTeam = teamsById.get(issue.teamId);
     const stateId =
-      issue.state?.category === "completed"
+      statesById.get(issue.stateId)?.category === "completed"
         ? issueTeam?.defaultStateId
         : issueTeam?.states.find((state) => state.category === "completed")?.id;
     if (stateId) {
@@ -71,6 +78,8 @@ export function IssueList({ workspaceId }: { workspaceId: string }) {
             issue={issue}
             key={issue.id}
             onToggleDone={() => toggleDone(issue)}
+            state={statesById.get(issue.stateId)}
+            team={teamsById.get(issue.teamId)}
           />
         ))}
       </ul>

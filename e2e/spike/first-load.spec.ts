@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { observePage, recordResult, summarize, waitForRows } from "./support";
+import { observePage, recordResult, signedInState, summarize, waitForRows } from "./support";
 
 const RUNS = 5;
 
@@ -9,10 +9,11 @@ test("first load shows the issue list within 2 seconds", async ({ browser }) => 
   const warm: number[] = [];
   const domReady: number[] = [];
   let rows = 0;
+  const storageState = await signedInState(browser);
 
   for (let run = 0; run < RUNS; run++) {
     // A new context has empty IndexedDB, so Zero starts with no local data.
-    const context = await browser.newContext();
+    const context = await browser.newContext({ storageState });
     const page = await context.newPage();
     await observePage(page);
 

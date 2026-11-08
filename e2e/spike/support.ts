@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 
-import { expect, type Page } from "@playwright/test";
+import { DEV_USER_EMAIL, DEV_USER_PASSWORD } from "@curved/db/dev";
+import { type Browser, type BrowserContext, expect, type Page } from "@playwright/test";
 import { Client } from "pg";
 
 export const WORKSPACE_ID = "00000000-0000-7000-8000-000000000001";
@@ -44,6 +45,7 @@ export function zeroCacheLogs(since: Date) {
 type ResultType = "unknown" | "complete" | "error";
 
 type View = {
+  // For a `.one()` query, `data` is one row or undefined instead of an array.
   addListener(listener: (data: readonly unknown[], resultType: ResultType) => void): () => void;
   destroy(): void;
 };
@@ -59,6 +61,7 @@ type CurvedHandle = {
   queries: {
     issues: {
       byFilter(args: Record<string, unknown>): unknown;
+      byId(args: { id: string }): unknown;
     };
   };
   mutators: {
@@ -112,6 +115,31 @@ export async function observePage(page: Page) {
   });
 }
 
+type StorageState = Awaited<ReturnType<BrowserContext["storageState"]>>;
+
+/**
+ * Signs in the dev user once and returns the session cookie as storage
+ * state. Contexts made from it start with an empty IndexedDB, so Zero still
+ * starts with no local data.
+ */
+export async function signedInState(browser: Browser): Promise<StorageState> {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await signIn(page);
+  const state = await context.storageState();
+  await context.close();
+  return state;
+}
+
+/** Signs in through the form, with CSS locators that stay cheap on big pages. */
+export async function signIn(page: Page) {
+  await page.goto("/sign-in");
+  await page.locator("input[type=email]").fill(DEV_USER_EMAIL);
+  await page.locator("input[type=password]").fill(DEV_USER_PASSWORD);
+  await page.locator("button[type=submit]").click();
+  await page.waitForURL((url) => !url.pathname.startsWith("/sign-in"));
+}
+
 export async function waitForRows(page: Page) {
   await page.waitForFunction(() => (window.spikeTimings.firstRowMs ?? -1) > 0, undefined, {
     timeout: 60_000,
@@ -125,7 +153,8 @@ export async function waitForRows(page: Page) {
  * Zero for seconds, so the spike uses cheap CSS locators.
  */
 export async function connectionLabel(page: Page, name: string, timeout = 30_000) {
-  await expect(page.locator("header span")).toHaveText(name, { timeout });
+  // The first span is the connection label; the user's name follows it.
+  await expect(page.locator("header span").first()).toHaveText(name, { timeout });
 }
 
 /** Records every text change of the first issue row's button. */
