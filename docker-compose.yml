@@ -38,6 +38,13 @@ services:
       - "4848:4848"
     volumes:
       - zero-data:/data
+    # The first start copies the replica and can take tens of seconds.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4848/keepalive"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+      start_period: 60s
 
 volumes:
   postgres-data:

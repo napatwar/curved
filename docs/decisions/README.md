@@ -4,10 +4,11 @@ This folder holds Curved's architecture decision records (ADRs). Each record exp
 
 ## Records
 
-| Number                                  | Decision                | Status   |
-| --------------------------------------- | ----------------------- | -------- |
-| [0001](0001-tech-stack.md)              | Tech stack              | accepted |
-| [0002](0002-development-conventions.md) | Development conventions | accepted |
+| Number                                  | Decision                | Status                              |
+| --------------------------------------- | ----------------------- | ----------------------------------- |
+| [0001](0001-tech-stack.md)              | Tech stack              | accepted, partly superseded by 0003 |
+| [0002](0002-development-conventions.md) | Development conventions | accepted, partly superseded by 0003 |
+| [0003](0003-defer-dco-and-renovate.md)  | Defer DCO and Renovate  | accepted                            |
 
 ## Writing a record
 
@@ -15,6 +16,6 @@ This folder holds Curved's architecture decision records (ADRs). Each record exp
 2. Set the status to `proposed` and open a pull request.
 3. Change the status to `accepted` or `rejected` when the pull request is decided, and add the record to the table above.
 
-Do not change the content of an accepted record. To change a decision, write a new record, then set the old record's status to `superseded by NNNN`.
+Do not change the content of an accepted record. To change a decision, write a new record, then set the old record's status to `superseded by NNNN`. When the new record replaces only part of the old one, use `accepted, partly superseded by NNNN`.
 
-Statuses: `proposed`, `accepted`, `rejected`, `deprecated`, `superseded by NNNN`.
+Statuses: `proposed`, `accepted`, `rejected`, `deprecated`, `superseded by NNNN`, `accepted, partly superseded by NNNN`.

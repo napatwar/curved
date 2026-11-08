@@ -18,7 +18,7 @@
     "test:web": "vitest run --project web",
     "test:e2e": "playwright test",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
-    "infra:up": "docker compose up -d --wait postgres && pnpm db:migrate && pnpm db:seed && docker compose up -d zero-cache",
+    "infra:up": "docker compose up -d --wait postgres && pnpm db:migrate && pnpm db:seed && docker compose up -d --wait zero-cache",
     "infra:down": "docker compose down",
     "db:generate": "pnpm --filter @curved/db generate",
     "db:migrate": "pnpm --filter @curved/db migrate",

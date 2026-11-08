@@ -24,23 +24,7 @@ Follow [Getting started](README.md#getting-started). Running `pnpm install` also
 
 5. Open a pull request with a [Conventional Commits](https://www.conventionalcommits.org/) title, such as `feat: add issue board`.
 
-## Sign off your commits
-
-Curved uses the [Developer Certificate of Origin](https://developercertificate.org/) (DCO). It is your statement that you have the right to submit your contribution under the project's license.
-
-Sign off each commit:
-
-```bash
-git commit -s
-```
-
-This adds a line with your name and email:
-
-```text
-Signed-off-by: Your Name <you@example.com>
-```
-
-A check blocks pull requests that contain commits without a sign-off.
+## License
 
 Your contribution is licensed under [AGPL-3.0-only](LICENSE), unless the package you change states a different license.
 

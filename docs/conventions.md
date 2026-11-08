@@ -96,5 +96,4 @@ Route files follow TanStack Router's naming, such as `$issueId.tsx`.
 - Branch from `main` with `<type>/<short-description>`, such as `feat/issue-board`.
 - Use [Conventional Commits](https://www.conventionalcommits.org/) types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `perf`, `build`.
 - Pull requests are squash merged, so the PR title becomes the commit message and must follow Conventional Commits.
-- Sign off every commit with `git commit -s`.
 - Add a decision record in `docs/decisions/` when a change alters an agreed decision.
