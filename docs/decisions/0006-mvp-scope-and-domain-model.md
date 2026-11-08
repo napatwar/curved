@@ -27,16 +27,17 @@ The current schema has an `issue` table with a fixed `status` check (`todo`, `in
 4. Labels: an array or JSON column on `issue`, or a junction table.
 5. Ordering: integer positions, floats, or string fractional indexes. Removal: hard delete only, a separate archive table, or `archived_at` and `deleted_at` columns.
 6. Descriptions: stored in `issue` or in a separate table, as Markdown, editor JSON, Yjs or HTML.
+7. Due dates, comment features, issue relations and permissions by role: in the MVP or later.
 
 ## Decision outcome
 
 ### MVP scope
 
-| Phase      | Features                                                                                                                                                                                                                                                  |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| MVP (v0.1) | Teams and issue keys; issues with title, description, state, priority, assignee, labels and sub-issues; comments; list and board views per team; filter, sort and group without saving; My issues; keyboard shortcuts; command palette; archive and trash |
-| Phase 2    | In-app notifications inbox, with email when SMTP is set; projects; saved views; issue activity history; attachments                                                                                                                                       |
-| Later      | Cycles and estimates; full-text search, including Thai; public REST API and API keys; integrations such as GitHub and Slack; triage; import from Linear; guest role; private teams                                                                        |
+| Phase      | Features                                                                                                                                                                                                                                                                                                   |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MVP (v0.1) | Teams and issue keys; issues with title, description, state, priority, assignee, labels, due date and sub-issues; comments that their authors can edit and delete; list and board views per team; filter, sort and group without saving; My issues; keyboard shortcuts; command palette; archive and trash |
+| Phase 2    | In-app notifications inbox, with email when SMTP is set; projects; saved views; issue activity history; attachments; comment threads; issue relations (blocks, related, duplicate)                                                                                                                         |
+| Later      | Cycles and estimates; full-text search, including Thai; public REST API and API keys; integrations such as GitHub and Slack; triage; import from Linear; guest role; private teams; comment reactions                                                                                                      |
 
 The MVP needs only Postgres, Zero and the API. Phase 2 brings `pg-boss`, file storage and log-like tables. Estimates wait for cycles, because they mean little without them.
 
@@ -78,7 +79,7 @@ Each team customizes its states. Every state belongs to a fixed category, as in 
 
 Later: `started_at` and `completed_at` on `issue`, for cycles, insights and auto-archive; the `triage` category; a Duplicate state, which needs issue relations.
 
-### Labels, priority, assignee and sub-issues
+### Labels, priority, assignee, due dates and sub-issues
 
 Labels:
 
@@ -98,6 +99,11 @@ Assignee and creator:
 - `issue.creator_id` is a nullable foreign key to `user`, set to null when the user is deleted. It supports a "Created by me" filter.
 - Removing a member unassigns their issues in that workspace, in a Better Auth hook after the member is removed. [0005](0005-authentication.md) syncs a user only to people who share a workspace, so a kept ID would show no name.
 - Foreign keys to `user` work while everything is in one database. If tenant data moves into cells, these foreign keys must be dropped, because auth becomes a central service.
+
+Due dates:
+
+- `issue.due_date` is a nullable `date`, with no time or time zone. The UI treats it as a calendar date, not a moment.
+- Views can filter and sort by it.
 
 Sub-issues:
 
@@ -149,20 +155,44 @@ Descriptions and comments are stored as Markdown in `text` columns:
 
 We rejected editor JSON in `jsonb` because ZQL cannot search it, the stored data would follow the editor's schema, and the API would still need to convert it. Yjs needs a separate collaboration server and stores binary data that cannot be searched. HTML needs sanitizing everywhere to avoid XSS.
 
+### Comments
+
+- `comment.author_id` is a nullable foreign key to `user`, set to null when the user is deleted. The spike's table has no author, so a migration adds it.
+- Mutators set `creator_id` and `author_id` from the session's `userID` ([0005](0005-authentication.md)), never from the arguments.
+- Authors can edit and delete only their own comments. An edit sets `comment.edited_at`, and the UI shows the comment as edited. Deleting is a hard delete.
+- Threads come in Phase 2, as `comment.parent_id`. Reactions come later.
+
+### Issue relations
+
+Blocks, related and duplicate relations come in Phase 2, as an `issue_relation` table. The Duplicate state waits for them.
+
+### Permissions by role
+
+Roles come from [0005](0005-authentication.md). Server mutators check them with its shared helper, and the UI hides actions the user cannot take.
+
+| Action                                                | Member | Admin and owner |
+| ----------------------------------------------------- | ------ | --------------- |
+| Create, edit, move, archive, trash and restore issues | Yes    | Yes             |
+| Write comments, and edit or delete their own          | Yes    | Yes             |
+| Create, edit and delete labels                        | Yes    | Yes             |
+| Create and delete teams, and change a team's name     | No     | Yes             |
+| Create, edit, reorder and delete workflow states      | No     | Yes             |
+| Delete issues permanently from the Trash              | No     | Yes             |
+
 ### Tables
 
 Every table has `workspace_id` and is added to the `zero_curved` publication.
 
-| Table               | Columns                                                                                                                                                                                     | Keys and constraints                                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `team`              | `id`, `workspace_id`, `key`, `name`, `next_issue_number`, `default_state_id`, `created_at`, `updated_at`                                                                                    | Unique `(workspace_id, key)`                                                                                    |
-| `workflow_state`    | `id`, `workspace_id`, `team_id`, `name`, `color`, `category`, `position`, `created_at`, `updated_at`                                                                                        | Check on `category`                                                                                             |
-| `issue`             | `id`, `workspace_id`, `team_id`, `number`, `title`, `state_id`, `priority`, `assignee_id`, `creator_id`, `parent_id`, `sort_order`, `archived_at`, `deleted_at`, `created_at`, `updated_at` | Unique `(team_id, number)`; checks `number > 0` and `priority` between 0 and 4; `sort_order` uses `COLLATE "C"` |
-| `issue_description` | `issue_id`, `workspace_id`, `body`, `created_at`, `updated_at`                                                                                                                              | Primary key `issue_id`                                                                                          |
-| `issue_key_alias`   | `id`, `workspace_id`, `team_id`, `number`, `issue_id`, `created_at`                                                                                                                         | Unique `(team_id, number)`                                                                                      |
-| `label`             | `id`, `workspace_id`, `team_id`, `name`, `color`, `created_at`, `updated_at`                                                                                                                | Partial unique indexes on `lower(name)` per scope                                                               |
-| `issue_label`       | `workspace_id`, `issue_id`, `label_id`, `created_at`                                                                                                                                        | Primary key `(issue_id, label_id)`                                                                              |
-| `comment`           | Unchanged: `id`, `workspace_id`, `issue_id`, `body`, `created_at`, `updated_at`                                                                                                             | `body` is Markdown                                                                                              |
+| Table               | Columns                                                                                                                                                                                                 | Keys and constraints                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `team`              | `id`, `workspace_id`, `key`, `name`, `next_issue_number`, `default_state_id`, `created_at`, `updated_at`                                                                                                | Unique `(workspace_id, key)`                                                                                    |
+| `workflow_state`    | `id`, `workspace_id`, `team_id`, `name`, `color`, `category`, `position`, `created_at`, `updated_at`                                                                                                    | Check on `category`                                                                                             |
+| `issue`             | `id`, `workspace_id`, `team_id`, `number`, `title`, `state_id`, `priority`, `assignee_id`, `creator_id`, `due_date`, `parent_id`, `sort_order`, `archived_at`, `deleted_at`, `created_at`, `updated_at` | Unique `(team_id, number)`; checks `number > 0` and `priority` between 0 and 4; `sort_order` uses `COLLATE "C"` |
+| `issue_description` | `issue_id`, `workspace_id`, `body`, `created_at`, `updated_at`                                                                                                                                          | Primary key `issue_id`                                                                                          |
+| `issue_key_alias`   | `id`, `workspace_id`, `team_id`, `number`, `issue_id`, `created_at`                                                                                                                                     | Unique `(team_id, number)`                                                                                      |
+| `label`             | `id`, `workspace_id`, `team_id`, `name`, `color`, `created_at`, `updated_at`                                                                                                                            | Partial unique indexes on `lower(name)` per scope                                                               |
+| `issue_label`       | `workspace_id`, `issue_id`, `label_id`, `created_at`                                                                                                                                                    | Primary key `(issue_id, label_id)`                                                                              |
+| `comment`           | `id`, `workspace_id`, `issue_id`, `author_id`, `body`, `edited_at`, `created_at`, `updated_at`                                                                                                          | Adds `author_id` and `edited_at` to the spike's table; `body` is Markdown                                       |
 
 ### Consequences
 
@@ -183,6 +213,8 @@ Every table has `workspace_id` and is added to the `zero_curved` publication.
 Implementation follow-up:
 
 - Replace `issue.status` and its check with `state_id`, and add the tables above. The spike seed must create a team and states.
+- Add `author_id` and `edited_at` to `comment`.
+- Confirm how Zero 1.11.3 exposes a Postgres `date` column, and keep `due_date` free of time zone shifts in the UI.
 - Add the shared archive and trash filter next to the membership filter from [0005](0005-authentication.md).
 - Update [conventions.md](../conventions.md) with the primary key exception for junction and 1:1 tables, and with `COLLATE "C"` for sort keys.
 - Measure size again, as [0004](0004-zero-spike-results.md) requires: seed `issue_description` with about 2KB of Markdown per issue, then measure the replica and the time to open an issue page.
