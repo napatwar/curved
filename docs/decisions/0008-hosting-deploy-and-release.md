@@ -71,6 +71,7 @@ The production Compose file has these services:
 
 - Configuration is in a `.env` file next to the Compose file: `CURVED_DOMAIN`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `ZERO_ADMIN_PASSWORD`, and the SMTP or OAuth settings a deployment turns on.
 - With `CURVED_DOMAIN=localhost`, one person can run Curved on their own machine. Browsers treat `localhost` as a secure context, so `Secure` cookies work there.
+- Other devices need HTTPS, because a plain HTTP address other than `localhost` cannot keep `Secure` cookies. A machine at home can use Tailscale with its `ts.net` certificate, or a domain through Cloudflare Tunnel, without opening ports to the internet. During the MVP, the maintainer's instance runs on a spare laptop and is reached from other devices this way.
 - A deployment that already has a reverse proxy, such as Traefik or Cloudflare Tunnel, sets Caddy to plain HTTP and points its proxy at Caddy. Either way there is one upstream.
 - zero-cache defaults suit a small machine: a low `ZERO_NUM_SYNC_WORKERS`, such as 2, a memory limit, and a restart policy. zero-cache forwards cookies to the API with `ZERO_QUERY_FORWARD_COOKIES` and `ZERO_MUTATE_FORWARD_COOKIES`.
 - The Compose file lives in the repository and pins the `curved` and `rocicorp/zero` versions together, so zero-cache always matches `@rocicorp/zero`, as 0003 requires.
@@ -216,7 +217,8 @@ For the MVP:
 - The web app's default `cacheURL` of `${location.origin}/zero`.
 - `/api/health`, JSON logs, `SIGTERM` handling, the optional Sentry SDK, and production secret checks in `env.ts`.
 - Add the expand-then-contract rule to [conventions.md](../conventions.md).
-- A self-hosting guide: install, upgrade, backup, off-site copies, restore and replica rebuild.
+- A CI job that builds the `curved` image on every pull request without pushing it, because others build from source during the MVP. Run some end-to-end tests against the production Compose file, to check the `/zero` routing and the cookie.
+- A self-hosting guide: minimum machine size, install, access from other devices, upgrade, backup, off-site copies, restore and replica rebuild. Measure the minimum size on the maintainer's instance. The estimate is 2–4GB of memory, not yet measured.
 - Test a restore and a replica rebuild on the maintainer's instance, and confirm that clients resync.
 - Turn on GitHub secret scanning and push protection.
 
