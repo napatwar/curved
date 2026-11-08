@@ -62,7 +62,12 @@
       }
     },
     {
-      "files": ["apps/api/src/index.ts", "packages/db/src/seed.ts", "e2e/**"],
+      "files": [
+        "apps/api/src/index.ts",
+        "packages/db/src/seed.ts",
+        "packages/db/src/seed-spike.ts",
+        "e2e/**"
+      ],
       "rules": {
         "no-console": "off"
       }
