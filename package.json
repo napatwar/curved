@@ -4,14 +4,20 @@
   "private": true,
   "license": "AGPL-3.0-only",
   "type": "module",
-  "packageManager": "pnpm@12.16.1",
-  "engines": {
-    "node": ">=24"
-  },
   "scripts": {
     "dev": "pnpm --parallel --filter \"./apps/*\" dev",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm -r typecheck && tsc -p tsconfig.json",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:web": "vitest run --project web",
+    "test:e2e": "playwright test",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "infra:up": "docker compose up -d --wait postgres && pnpm db:migrate && pnpm db:seed && docker compose up -d zero-cache",
     "infra:down": "docker compose down",
     "db:generate": "pnpm --filter @curved/db generate",
@@ -20,6 +26,24 @@
     "zero:generate": "pnpm --filter @curved/zero generate"
   },
   "devDependencies": {
-    "typescript": "^7.0.2"
-  }
+    "@curved/db": "workspace:*",
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "@vitest/browser-playwright": "^5.1.0",
+    "drizzle-orm": "^0.45.4",
+    "lefthook": "^2.2.2",
+    "oxfmt": "^0.77.0",
+    "oxlint": "^1.92.0",
+    "oxlint-tsgolint": "^7.0.2006",
+    "pg": "^8.23.1",
+    "playwright": "^1.65.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0",
+    "vitest-browser-react": "^2.3.0"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@12.16.1"
 }

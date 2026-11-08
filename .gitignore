@@ -16,3 +16,5 @@ dist/
 # Claude Code local state
 .claude/worktrees/
 .claude/settings.local.json
+playwright-report/
+test-results/

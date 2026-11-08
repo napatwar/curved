@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:best-practices"],
+  "minimumReleaseAge": "3 days",
+  "packageRules": [
+    {
+      "description": "The zero-cache image must match the @rocicorp/zero package version.",
+      "matchPackageNames": ["@rocicorp/zero", "rocicorp/zero"],
+      "groupName": "zero"
+    },
+    {
+      "description": "Lint and format tools change output together.",
+      "matchPackageNames": ["oxlint", "oxlint-tsgolint", "oxfmt"],
+      "groupName": "oxc"
+    }
+  ]
+}

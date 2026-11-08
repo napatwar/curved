@@ -1,24 +1,25 @@
-import {createRouter, RouterProvider} from '@tanstack/react-router'
-import {StrictMode} from 'react'
-import {createRoot} from 'react-dom/client'
-import './index.css'
-import {routeTree} from './routeTree.gen'
+import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 
-const router = createRouter({routeTree})
+import "./index.css";
+import { routeTree } from "./routeTree.gen";
 
-declare module '@tanstack/react-router' {
+const router = createRouter({ routeTree });
+
+declare module "@tanstack/react-router" {
   interface Register {
-    router: typeof router
+    router: typeof router;
   }
 }
 
-const root = document.getElementById('root')
+const root = document.getElementById("root");
 if (!root) {
-  throw new Error('Root element not found')
+  throw new Error("Root element not found");
 }
 
 createRoot(root).render(
   <StrictMode>
     <RouterProvider router={router} />
   </StrictMode>,
-)
+);

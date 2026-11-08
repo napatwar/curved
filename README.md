@@ -11,16 +11,18 @@ Curved is at a very early stage. It currently has one `issue` table and no authe
 - **API:** Node.js, Hono
 - **Data:** Postgres 18, Drizzle
 
-See [the tech stack decision](docs/decisions/0001-tech-stack.md) for the reasoning and limits.
+See [the decision records](docs/decisions/README.md) for the reasoning and limits, and [the conventions](docs/conventions.md) for how the code is organized.
 
 ## Project layout
 
-| Path | Purpose |
-|---|---|
-| `apps/web` | Browser app |
-| `apps/api` | REST API and the Zero query and mutate endpoints |
-| `packages/db` | Drizzle schema, migrations and seed data |
+| Path            | Purpose                                                                |
+| --------------- | ---------------------------------------------------------------------- |
+| `apps/web`      | Browser app                                                            |
+| `apps/api`      | REST API and the Zero query and mutate endpoints                       |
+| `packages/db`   | Drizzle schema, migrations and seed data                               |
 | `packages/zero` | Generated Zero schema, plus queries and mutators shared by web and API |
+| `test`          | Shared test setup                                                      |
+| `e2e`           | End-to-end tests                                                       |
 
 ## Getting started
 
@@ -46,18 +48,30 @@ Open <http://localhost:5173>. `pnpm infra:up` starts Postgres, applies migration
 
 ## Common commands
 
-| Command | Purpose |
-|---|---|
-| `pnpm typecheck` | Check types in every package |
-| `pnpm build` | Build the web app |
-| `pnpm db:generate` | Create a migration from `packages/db/src/schema.ts` |
-| `pnpm db:migrate` | Apply migrations |
-| `pnpm zero:generate` | Regenerate the Zero schema from the Drizzle schema |
-| `pnpm infra:down` | Stop Postgres and `zero-cache` |
+| Command                 | Purpose                                            |
+| ----------------------- | -------------------------------------------------- |
+| `pnpm check`            | Check formatting, lint, types and run Vitest tests |
+| `pnpm format`           | Format all files                                   |
+| `pnpm lint:fix`         | Fix lint problems that can be fixed automatically  |
+| `pnpm test:unit`        | Run unit tests                                     |
+| `pnpm test:integration` | Run integration tests against Postgres             |
+| `pnpm test:web`         | Run web tests in Chromium                          |
+| `pnpm test:e2e`         | Run end-to-end tests; needs `pnpm infra:up`        |
+| `pnpm build`            | Build the web app                                  |
+| `pnpm db:generate`      | Create a migration from `packages/db/src/schema`   |
+| `pnpm db:migrate`       | Apply migrations                                   |
+| `pnpm zero:generate`    | Regenerate the Zero schema from the Drizzle schema |
+| `pnpm infra:down`       | Stop Postgres and `zero-cache`                     |
+
+Web and end-to-end tests need Chromium once:
+
+```bash
+pnpm exec playwright install chromium
+```
+
+Integration tests use a `curved_test` database in the same Postgres. Set `TEST_DATABASE_URL` to use another one.
 
 `pnpm zero:generate` warns that `issue.id` has a database default. This is expected because mutators always send an `id`.
-
-When a new table should sync to clients, add it to the `zero_curved` publication in a migration.
 
 ## License
 
