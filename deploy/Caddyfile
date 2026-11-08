@@ -1,0 +1,32 @@
+# Curved behind one origin (ADR 0008):
+#   /zero/*  zero-cache
+#   /*       curved, which serves /api/* and the web app
+#
+# CADDY_SITE_ADDRESS comes from docker-compose.yml. A bare domain gets a
+# Let's Encrypt certificate. An http:// address serves plain HTTP, for
+# localhost or when another proxy (Tailscale Serve, Cloudflare Tunnel)
+# handles HTTPS.
+
+{$CADDY_SITE_ADDRESS} {
+	# zero-cache routes /zero/<worker>/v<version>/<action> itself, so the path
+	# is passed through unchanged. Caddy proxies its WebSocket as is.
+	handle /zero/* {
+		reverse_proxy zero-cache:4848
+	}
+
+	handle {
+		encode zstd gzip
+		reverse_proxy curved:3000
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

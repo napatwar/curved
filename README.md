@@ -23,6 +23,7 @@ See [the decision records](docs/decisions/README.md) for the reasoning and limit
 | `packages/zero` | Generated Zero schema, plus queries and mutators shared by web and API |
 | `test`          | Shared test setup                                                      |
 | `e2e`           | End-to-end tests                                                       |
+| `deploy`        | Production Compose file, `Caddyfile` and settings for self-hosting     |
 
 ## Getting started
 
@@ -57,7 +58,8 @@ Open <http://localhost:5173>. `pnpm infra:up` starts Postgres, applies migration
 | `pnpm test:integration` | Run integration tests against Postgres             |
 | `pnpm test:web`         | Run web tests in Chromium                          |
 | `pnpm test:e2e`         | Run end-to-end tests; needs `pnpm infra:up`        |
-| `pnpm build`            | Build the web app                                  |
+| `pnpm test:e2e:prod`    | Run end-to-end tests against the production stack  |
+| `pnpm build`            | Build the web app and the API bundle               |
 | `pnpm db:generate`      | Create a migration from `packages/db/src/schema`   |
 | `pnpm db:migrate`       | Apply migrations                                   |
 | `pnpm zero:generate`    | Regenerate the Zero schema from the Drizzle schema |
@@ -72,6 +74,10 @@ pnpm exec playwright install chromium
 Integration tests use a `curved_test` database in the same Postgres. Set `TEST_DATABASE_URL` to use another one.
 
 `pnpm zero:generate` warns that `issue.id` has a database default. This is expected because mutators always send an `id`.
+
+## Self-hosting
+
+See [the self-hosting guide](docs/self-hosting.md). It runs the `curved` image, Postgres, `zero-cache` and Caddy with Docker Compose.
 
 ## License
 

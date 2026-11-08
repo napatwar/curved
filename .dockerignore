@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/.vite
+**/.tanstack
+**/*.tsbuildinfo
+.git
+.claude
+.env
+.env.*
+!.env.example
+deploy/.env
+deploy/backups
+playwright-report
+test-results
+spike-results
+*.log
+.DS_Store

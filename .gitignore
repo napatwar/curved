@@ -19,3 +19,4 @@ dist/
 playwright-report/
 test-results/
 spike-results/
+deploy/backups/
