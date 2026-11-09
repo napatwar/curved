@@ -38,7 +38,7 @@ test("a removed member's client loses the workspace's data", async ({ browser })
 
     await member.goto(`/invitations/${invitation.id}`);
     await member.getByRole("button", { name: "Accept invitation" }).click();
-    await expect(member).toHaveURL(new RegExp(`/${slug}$`));
+    await expect(member).toHaveURL(new RegExp(`/${slug}/team/[A-Z0-9]+/issues$`));
     await expect(member.getByText(title)).toBeVisible();
 
     await authApi(owner, "/organization/remove-member", {

@@ -16,6 +16,7 @@ apps/web/src/
   components/ui/       shadcn/ui components
   hooks/               Hooks shared by several features
   lib/                 App-wide setup and helpers
+  testing/             Helpers for web tests, such as renderWithRouter
 apps/api/src/
   routes/              Public REST routes, grouped by resource
   zero/                Zero query and mutate endpoints
@@ -80,6 +81,52 @@ Route files follow TanStack Router's naming, such as `$issueId.tsx`.
 - There are no down migrations. To undo a release, restore a backup.
 - Add a table to the `zero_curved` publication in a migration only when clients need it.
 - Do not write app queries that join across workspaces.
+
+## User interface
+
+These rules keep screens consistent. The tokens live in `apps/web/src/index.css`, so change a color or size there, never in a component.
+
+### Look and layout
+
+- Curved follows the structure that Linear users know, not its look. A 240px sidebar holds the workspace menu, My issues, the teams, and Archive, Trash and Settings at the bottom. The main area has a 44px header and content that fills the width. Do not copy Linear's icons, colors, illustrations or wording.
+- Below 768px, the sidebar becomes a drawer that the menu button in the header opens.
+- With one team, the sidebar shows Issues instead of a Teams section ([0006](decisions/0006-mvp-scope-and-domain-model.md)).
+
+### Density and type
+
+The interface is compact, so a screen shows many issues.
+
+| Element               | Size                                  |
+| --------------------- | ------------------------------------- |
+| Body text (`text-sm`) | 13px on a 20px line                   |
+| Secondary text        | `text-xs`, 12px on a 16px line        |
+| Sidebar item          | 28px high (`h-7`)                     |
+| List row              | 36px high (`h-9`)                     |
+| Page header           | 44px high (`h-11`)                    |
+| Button and input      | 32px (`h-8`), 28px when small         |
+| Icons                 | 16px (`size-4`), 14px in tight places |
+
+- `index.css` sets `text-sm` to 13/20 and makes it the body size, so shadcn/ui components follow without edits.
+- `text-xs` is too tight for Thai stacked marks. Use it only for text we write, such as counts and shortcut hints, never for names, titles or other user text.
+- Follow the Thai text rules in [0007](decisions/0007-internationalization.md): `font-bold` at most, no `leading-none` or `leading-tight` on user text, at least 1.6 line height for multi-line text, and room around `truncate`.
+
+### Color and theme
+
+- Colors are OKLCH tokens. Neutrals have a slight blue tint (hue 260). The accent is teal (hue 190), used for primary buttons, focus rings, links and the selected item. It stays clear of the workflow state colors.
+- Body text and the primary button meet WCAG AA contrast, 4.5:1, in both themes. Check any new token pair.
+- Use semantic tokens such as `bg-background`, `text-muted-foreground` and `bg-primary`, never raw palette colors such as `bg-zinc-100`. Workflow state and label colors come from the data.
+- The theme follows the system by default. The workspace menu sets Light, Dark or System, stored per device in `localStorage` (`curved:theme`). A script in `index.html` applies it before the first paint.
+
+### Icons
+
+- Use Lucide (`lucide-react`), the shadcn/ui default, with its default stroke. Icon-only buttons need an `aria-label`.
+- Draw state and priority icons as small SVG components of our own, because they show data such as a state's color and category.
+
+### Shared building blocks
+
+- Empty, loading and error states come from `components/` (`EmptyState`, `LoadingState`, `ErrorState`). Zero answers most queries from local data at once, so `LoadingState` waits before it shows anything.
+- Format every date and number with `lib/format.ts`.
+- Register keyboard shortcuts with `useShortcut` from `hooks/use-shortcut.ts`, never with your own `keydown` listener. The registry gives each shortcut a title, so the command palette can list and run it. Shortcuts match `event.key` and fall back to `event.code` under a Thai layout ([0007](decisions/0007-internationalization.md)).
 
 ## Errors
 

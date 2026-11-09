@@ -52,8 +52,8 @@ test("the web app syncs through /zero on its own origin", async ({ browser, base
   expect(socketUrl.host).toBe(origin.host);
   expect(socketUrl.pathname).toMatch(/^\/zero\//);
 
-  await expect(first.getByText("connected", { exact: true })).toBeVisible();
-  await expect(second.getByText("connected", { exact: true })).toBeVisible();
+  await expect(first.getByRole("status", { name: "Sync: Synced" })).toBeVisible();
+  await expect(second.getByRole("status", { name: "Sync: Synced" })).toBeVisible();
 
   await first.getByLabel("Issue title").fill(title);
   await first.getByRole("button", { name: "Add" }).click();
@@ -78,7 +78,7 @@ test("the session cookie reaches the API through zero-cache", async ({ browser }
 
   const page = await context.newPage();
   await page.goto(`/${e2eWorkspaceSlug}`);
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Sync: Synced" })).toBeVisible();
 
   await expect.poll(() => apiReceivedCookie(since), { timeout: 10_000 }).toBe(true);
 });

@@ -9,6 +9,7 @@ export default mergeConfig(
     test: {
       name: "web",
       include: ["src/**/*.test.{ts,tsx}"],
+      setupFiles: ["./src/testing/setup.ts"],
       browser: {
         enabled: true,
         headless: true,

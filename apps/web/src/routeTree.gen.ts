@@ -14,7 +14,17 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppWorkspaceSlugRouteImport } from './routes/_app/$workspaceSlug'
+import { Route as AppWorkspaceSlugIndexRouteImport } from './routes/_app/$workspaceSlug/index'
+import { Route as AppWorkspaceSlugArchiveRouteImport } from './routes/_app/$workspaceSlug/archive'
+import { Route as AppWorkspaceSlugMyIssuesRouteImport } from './routes/_app/$workspaceSlug/my-issues'
+import { Route as AppWorkspaceSlugSettingsRouteImport } from './routes/_app/$workspaceSlug/settings'
+import { Route as AppWorkspaceSlugTrashRouteImport } from './routes/_app/$workspaceSlug/trash'
+import { Route as AppWorkspaceSlugViewsRouteImport } from './routes/_app/$workspaceSlug/views'
 import { Route as AppInvitationsInvitationIdRouteImport } from './routes/_app/invitations.$invitationId'
+import { Route as AppWorkspaceSlugIssueIssueKeyRouteImport } from './routes/_app/$workspaceSlug/issue/$issueKey'
+import { Route as AppWorkspaceSlugTeamTeamKeyRouteImport } from './routes/_app/$workspaceSlug/team/$teamKey'
+import { Route as AppWorkspaceSlugTeamTeamKeyIndexRouteImport } from './routes/_app/$workspaceSlug/team/$teamKey/index'
+import { Route as AppWorkspaceSlugTeamTeamKeyIssuesRouteImport } from './routes/_app/$workspaceSlug/team/$teamKey/issues'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -40,35 +50,119 @@ const AppWorkspaceSlugRoute = AppWorkspaceSlugRouteImport.update({
   path: '/$workspaceSlug',
   getParentRoute: () => AppRoute,
 } as any)
+const AppWorkspaceSlugIndexRoute = AppWorkspaceSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppWorkspaceSlugRoute,
+} as any)
+const AppWorkspaceSlugArchiveRoute = AppWorkspaceSlugArchiveRouteImport.update({
+  id: '/archive',
+  path: '/archive',
+  getParentRoute: () => AppWorkspaceSlugRoute,
+} as any)
+const AppWorkspaceSlugMyIssuesRoute =
+  AppWorkspaceSlugMyIssuesRouteImport.update({
+    id: '/my-issues',
+    path: '/my-issues',
+    getParentRoute: () => AppWorkspaceSlugRoute,
+  } as any)
+const AppWorkspaceSlugSettingsRoute =
+  AppWorkspaceSlugSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AppWorkspaceSlugRoute,
+  } as any)
+const AppWorkspaceSlugTrashRoute = AppWorkspaceSlugTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => AppWorkspaceSlugRoute,
+} as any)
+const AppWorkspaceSlugViewsRoute = AppWorkspaceSlugViewsRouteImport.update({
+  id: '/views',
+  path: '/views',
+  getParentRoute: () => AppWorkspaceSlugRoute,
+} as any)
 const AppInvitationsInvitationIdRoute =
   AppInvitationsInvitationIdRouteImport.update({
     id: '/invitations/$invitationId',
     path: '/invitations/$invitationId',
     getParentRoute: () => AppRoute,
   } as any)
+const AppWorkspaceSlugIssueIssueKeyRoute =
+  AppWorkspaceSlugIssueIssueKeyRouteImport.update({
+    id: '/issue/$issueKey',
+    path: '/issue/$issueKey',
+    getParentRoute: () => AppWorkspaceSlugRoute,
+  } as any)
+const AppWorkspaceSlugTeamTeamKeyRoute =
+  AppWorkspaceSlugTeamTeamKeyRouteImport.update({
+    id: '/team/$teamKey',
+    path: '/team/$teamKey',
+    getParentRoute: () => AppWorkspaceSlugRoute,
+  } as any)
+const AppWorkspaceSlugTeamTeamKeyIndexRoute =
+  AppWorkspaceSlugTeamTeamKeyIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppWorkspaceSlugTeamTeamKeyRoute,
+  } as any)
+const AppWorkspaceSlugTeamTeamKeyIssuesRoute =
+  AppWorkspaceSlugTeamTeamKeyIssuesRouteImport.update({
+    id: '/issues',
+    path: '/issues',
+    getParentRoute: () => AppWorkspaceSlugTeamTeamKeyRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/$workspaceSlug': typeof AppWorkspaceSlugRoute
+  '/$workspaceSlug': typeof AppWorkspaceSlugRouteWithChildren
+  '/$workspaceSlug/archive': typeof AppWorkspaceSlugArchiveRoute
+  '/$workspaceSlug/my-issues': typeof AppWorkspaceSlugMyIssuesRoute
+  '/$workspaceSlug/settings': typeof AppWorkspaceSlugSettingsRoute
+  '/$workspaceSlug/trash': typeof AppWorkspaceSlugTrashRoute
+  '/$workspaceSlug/views': typeof AppWorkspaceSlugViewsRoute
   '/invitations/$invitationId': typeof AppInvitationsInvitationIdRoute
+  '/$workspaceSlug/': typeof AppWorkspaceSlugIndexRoute
+  '/$workspaceSlug/issue/$issueKey': typeof AppWorkspaceSlugIssueIssueKeyRoute
+  '/$workspaceSlug/team/$teamKey': typeof AppWorkspaceSlugTeamTeamKeyRouteWithChildren
+  '/$workspaceSlug/team/$teamKey/issues': typeof AppWorkspaceSlugTeamTeamKeyIssuesRoute
+  '/$workspaceSlug/team/$teamKey/': typeof AppWorkspaceSlugTeamTeamKeyIndexRoute
 }
 export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/$workspaceSlug': typeof AppWorkspaceSlugRoute
   '/': typeof AppIndexRoute
+  '/$workspaceSlug/archive': typeof AppWorkspaceSlugArchiveRoute
+  '/$workspaceSlug/my-issues': typeof AppWorkspaceSlugMyIssuesRoute
+  '/$workspaceSlug/settings': typeof AppWorkspaceSlugSettingsRoute
+  '/$workspaceSlug/trash': typeof AppWorkspaceSlugTrashRoute
+  '/$workspaceSlug/views': typeof AppWorkspaceSlugViewsRoute
   '/invitations/$invitationId': typeof AppInvitationsInvitationIdRoute
+  '/$workspaceSlug': typeof AppWorkspaceSlugIndexRoute
+  '/$workspaceSlug/issue/$issueKey': typeof AppWorkspaceSlugIssueIssueKeyRoute
+  '/$workspaceSlug/team/$teamKey/issues': typeof AppWorkspaceSlugTeamTeamKeyIssuesRoute
+  '/$workspaceSlug/team/$teamKey': typeof AppWorkspaceSlugTeamTeamKeyIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/_app/$workspaceSlug': typeof AppWorkspaceSlugRoute
+  '/_app/$workspaceSlug': typeof AppWorkspaceSlugRouteWithChildren
   '/_app/': typeof AppIndexRoute
+  '/_app/$workspaceSlug/archive': typeof AppWorkspaceSlugArchiveRoute
+  '/_app/$workspaceSlug/my-issues': typeof AppWorkspaceSlugMyIssuesRoute
+  '/_app/$workspaceSlug/settings': typeof AppWorkspaceSlugSettingsRoute
+  '/_app/$workspaceSlug/trash': typeof AppWorkspaceSlugTrashRoute
+  '/_app/$workspaceSlug/views': typeof AppWorkspaceSlugViewsRoute
   '/_app/invitations/$invitationId': typeof AppInvitationsInvitationIdRoute
+  '/_app/$workspaceSlug/': typeof AppWorkspaceSlugIndexRoute
+  '/_app/$workspaceSlug/issue/$issueKey': typeof AppWorkspaceSlugIssueIssueKeyRoute
+  '/_app/$workspaceSlug/team/$teamKey': typeof AppWorkspaceSlugTeamTeamKeyRouteWithChildren
+  '/_app/$workspaceSlug/team/$teamKey/issues': typeof AppWorkspaceSlugTeamTeamKeyIssuesRoute
+  '/_app/$workspaceSlug/team/$teamKey/': typeof AppWorkspaceSlugTeamTeamKeyIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -77,14 +171,32 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/$workspaceSlug'
+    | '/$workspaceSlug/archive'
+    | '/$workspaceSlug/my-issues'
+    | '/$workspaceSlug/settings'
+    | '/$workspaceSlug/trash'
+    | '/$workspaceSlug/views'
     | '/invitations/$invitationId'
+    | '/$workspaceSlug/'
+    | '/$workspaceSlug/issue/$issueKey'
+    | '/$workspaceSlug/team/$teamKey'
+    | '/$workspaceSlug/team/$teamKey/issues'
+    | '/$workspaceSlug/team/$teamKey/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/sign-in'
     | '/sign-up'
-    | '/$workspaceSlug'
     | '/'
+    | '/$workspaceSlug/archive'
+    | '/$workspaceSlug/my-issues'
+    | '/$workspaceSlug/settings'
+    | '/$workspaceSlug/trash'
+    | '/$workspaceSlug/views'
     | '/invitations/$invitationId'
+    | '/$workspaceSlug'
+    | '/$workspaceSlug/issue/$issueKey'
+    | '/$workspaceSlug/team/$teamKey/issues'
+    | '/$workspaceSlug/team/$teamKey'
   id:
     | '__root__'
     | '/_app'
@@ -92,7 +204,17 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/_app/$workspaceSlug'
     | '/_app/'
+    | '/_app/$workspaceSlug/archive'
+    | '/_app/$workspaceSlug/my-issues'
+    | '/_app/$workspaceSlug/settings'
+    | '/_app/$workspaceSlug/trash'
+    | '/_app/$workspaceSlug/views'
     | '/_app/invitations/$invitationId'
+    | '/_app/$workspaceSlug/'
+    | '/_app/$workspaceSlug/issue/$issueKey'
+    | '/_app/$workspaceSlug/team/$teamKey'
+    | '/_app/$workspaceSlug/team/$teamKey/issues'
+    | '/_app/$workspaceSlug/team/$teamKey/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -138,6 +260,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWorkspaceSlugRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/$workspaceSlug/': {
+      id: '/_app/$workspaceSlug/'
+      path: '/'
+      fullPath: '/$workspaceSlug/'
+      preLoaderRoute: typeof AppWorkspaceSlugIndexRouteImport
+      parentRoute: typeof AppWorkspaceSlugRoute
+    }
+    '/_app/$workspaceSlug/archive': {
+      id: '/_app/$workspaceSlug/archive'
+      path: '/archive'
+      fullPath: '/$workspaceSlug/archive'
+      preLoaderRoute: typeof AppWorkspaceSlugArchiveRouteImport
+      parentRoute: typeof AppWorkspaceSlugRoute
+    }
+    '/_app/$workspaceSlug/my-issues': {
+      id: '/_app/$workspaceSlug/my-issues'
+      path: '/my-issues'
+      fullPath: '/$workspaceSlug/my-issues'
+      preLoaderRoute: typeof AppWorkspaceSlugMyIssuesRouteImport
+      parentRoute: typeof AppWorkspaceSlugRoute
+    }
+    '/_app/$workspaceSlug/settings': {
+      id: '/_app/$workspaceSlug/settings'
+      path: '/settings'
+      fullPath: '/$workspaceSlug/settings'
+      preLoaderRoute: typeof AppWorkspaceSlugSettingsRouteImport
+      parentRoute: typeof AppWorkspaceSlugRoute
+    }
+    '/_app/$workspaceSlug/trash': {
+      id: '/_app/$workspaceSlug/trash'
+      path: '/trash'
+      fullPath: '/$workspaceSlug/trash'
+      preLoaderRoute: typeof AppWorkspaceSlugTrashRouteImport
+      parentRoute: typeof AppWorkspaceSlugRoute
+    }
+    '/_app/$workspaceSlug/views': {
+      id: '/_app/$workspaceSlug/views'
+      path: '/views'
+      fullPath: '/$workspaceSlug/views'
+      preLoaderRoute: typeof AppWorkspaceSlugViewsRouteImport
+      parentRoute: typeof AppWorkspaceSlugRoute
+    }
     '/_app/invitations/$invitationId': {
       id: '/_app/invitations/$invitationId'
       path: '/invitations/$invitationId'
@@ -145,17 +309,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInvitationsInvitationIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/$workspaceSlug/issue/$issueKey': {
+      id: '/_app/$workspaceSlug/issue/$issueKey'
+      path: '/issue/$issueKey'
+      fullPath: '/$workspaceSlug/issue/$issueKey'
+      preLoaderRoute: typeof AppWorkspaceSlugIssueIssueKeyRouteImport
+      parentRoute: typeof AppWorkspaceSlugRoute
+    }
+    '/_app/$workspaceSlug/team/$teamKey': {
+      id: '/_app/$workspaceSlug/team/$teamKey'
+      path: '/team/$teamKey'
+      fullPath: '/$workspaceSlug/team/$teamKey'
+      preLoaderRoute: typeof AppWorkspaceSlugTeamTeamKeyRouteImport
+      parentRoute: typeof AppWorkspaceSlugRoute
+    }
+    '/_app/$workspaceSlug/team/$teamKey/': {
+      id: '/_app/$workspaceSlug/team/$teamKey/'
+      path: '/'
+      fullPath: '/$workspaceSlug/team/$teamKey/'
+      preLoaderRoute: typeof AppWorkspaceSlugTeamTeamKeyIndexRouteImport
+      parentRoute: typeof AppWorkspaceSlugTeamTeamKeyRoute
+    }
+    '/_app/$workspaceSlug/team/$teamKey/issues': {
+      id: '/_app/$workspaceSlug/team/$teamKey/issues'
+      path: '/issues'
+      fullPath: '/$workspaceSlug/team/$teamKey/issues'
+      preLoaderRoute: typeof AppWorkspaceSlugTeamTeamKeyIssuesRouteImport
+      parentRoute: typeof AppWorkspaceSlugTeamTeamKeyRoute
+    }
   }
 }
 
+interface AppWorkspaceSlugTeamTeamKeyRouteChildren {
+  AppWorkspaceSlugTeamTeamKeyIssuesRoute: typeof AppWorkspaceSlugTeamTeamKeyIssuesRoute
+  AppWorkspaceSlugTeamTeamKeyIndexRoute: typeof AppWorkspaceSlugTeamTeamKeyIndexRoute
+}
+
+const AppWorkspaceSlugTeamTeamKeyRouteChildren: AppWorkspaceSlugTeamTeamKeyRouteChildren =
+  {
+    AppWorkspaceSlugTeamTeamKeyIssuesRoute:
+      AppWorkspaceSlugTeamTeamKeyIssuesRoute,
+    AppWorkspaceSlugTeamTeamKeyIndexRoute:
+      AppWorkspaceSlugTeamTeamKeyIndexRoute,
+  }
+
+const AppWorkspaceSlugTeamTeamKeyRouteWithChildren =
+  AppWorkspaceSlugTeamTeamKeyRoute._addFileChildren(
+    AppWorkspaceSlugTeamTeamKeyRouteChildren,
+  )
+
+interface AppWorkspaceSlugRouteChildren {
+  AppWorkspaceSlugArchiveRoute: typeof AppWorkspaceSlugArchiveRoute
+  AppWorkspaceSlugMyIssuesRoute: typeof AppWorkspaceSlugMyIssuesRoute
+  AppWorkspaceSlugSettingsRoute: typeof AppWorkspaceSlugSettingsRoute
+  AppWorkspaceSlugTrashRoute: typeof AppWorkspaceSlugTrashRoute
+  AppWorkspaceSlugViewsRoute: typeof AppWorkspaceSlugViewsRoute
+  AppWorkspaceSlugIndexRoute: typeof AppWorkspaceSlugIndexRoute
+  AppWorkspaceSlugIssueIssueKeyRoute: typeof AppWorkspaceSlugIssueIssueKeyRoute
+  AppWorkspaceSlugTeamTeamKeyRoute: typeof AppWorkspaceSlugTeamTeamKeyRouteWithChildren
+}
+
+const AppWorkspaceSlugRouteChildren: AppWorkspaceSlugRouteChildren = {
+  AppWorkspaceSlugArchiveRoute: AppWorkspaceSlugArchiveRoute,
+  AppWorkspaceSlugMyIssuesRoute: AppWorkspaceSlugMyIssuesRoute,
+  AppWorkspaceSlugSettingsRoute: AppWorkspaceSlugSettingsRoute,
+  AppWorkspaceSlugTrashRoute: AppWorkspaceSlugTrashRoute,
+  AppWorkspaceSlugViewsRoute: AppWorkspaceSlugViewsRoute,
+  AppWorkspaceSlugIndexRoute: AppWorkspaceSlugIndexRoute,
+  AppWorkspaceSlugIssueIssueKeyRoute: AppWorkspaceSlugIssueIssueKeyRoute,
+  AppWorkspaceSlugTeamTeamKeyRoute:
+    AppWorkspaceSlugTeamTeamKeyRouteWithChildren,
+}
+
+const AppWorkspaceSlugRouteWithChildren =
+  AppWorkspaceSlugRoute._addFileChildren(AppWorkspaceSlugRouteChildren)
+
 interface AppRouteChildren {
-  AppWorkspaceSlugRoute: typeof AppWorkspaceSlugRoute
+  AppWorkspaceSlugRoute: typeof AppWorkspaceSlugRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
   AppInvitationsInvitationIdRoute: typeof AppInvitationsInvitationIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppWorkspaceSlugRoute: AppWorkspaceSlugRoute,
+  AppWorkspaceSlugRoute: AppWorkspaceSlugRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
   AppInvitationsInvitationIdRoute: AppInvitationsInvitationIdRoute,
 }

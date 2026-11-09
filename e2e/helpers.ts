@@ -7,7 +7,7 @@ export async function signIn(page: Page, email = DEV_USER_EMAIL, password = DEV_
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByText("connected", { exact: true })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Sync: Synced" })).toBeVisible();
 }
 
 /**

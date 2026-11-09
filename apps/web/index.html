@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Curved</title>
+    <script>
+      // Applies the saved theme before the first paint, so a dark theme does
+      // not flash white. src/lib/theme.ts owns the key and keeps it in sync.
+      try {
+        var theme = localStorage.getItem("curved:theme");
+        if (
+          theme === "dark" ||
+          (theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches)
+        ) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (error) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
