@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { observePage, recordResult, sql, waitForRows, WORKSPACE_ID } from "./support";
+import { observePage, recordResult, signIn, sql, waitForRows, WORKSPACE_ID } from "./support";
 
 const TITLE = `Spike rollback check ${Date.now()}`;
 let issueId = "";
@@ -11,8 +11,14 @@ let issueId = "";
 test.beforeAll(async () => {
   const now = new Date();
   const [row] = await sql<{ id: string }>(
-    `insert into issue (id, workspace_id, title, status, created_at, updated_at)
-     values (uuidv7(), $1, $2, 'todo', $3, $3) returning id`,
+    `with allocated as (
+       update team set next_issue_number = next_issue_number + 1
+       where id = (select id from team where workspace_id = $1 order by created_at limit 1)
+       returning id, next_issue_number - 1 as number, default_state_id
+     )
+     insert into issue (id, workspace_id, team_id, number, title, state_id, priority, sort_order, created_at, updated_at)
+     select uuidv7(), $1, id, number, $2, default_state_id, 0, 'Zz', $3, $3 from allocated
+     returning id`,
     [WORKSPACE_ID, TITLE, now],
   );
   issueId = row?.id ?? "";
@@ -30,7 +36,7 @@ test.afterAll(async () => {
 
 test("a rejected mutation rolls back and shows the error", async ({ page }) => {
   await observePage(page);
-  await page.goto("/");
+  await signIn(page);
   await waitForRows(page);
   const row = page.locator("main ul > li").filter({ hasText: TITLE });
   await expect(row.locator("button")).toHaveText("Done");
@@ -71,19 +77,21 @@ test("a rejected mutation rolls back and shows the error", async ({ page }) => {
   await expect(row.locator("button")).toHaveText("Done");
 
   const changes = await page.evaluate(() => window.spikeTimings.rowChanges);
-  const [saved] = await sql<{ status: string }>("select status from issue where id = $1", [
-    issueId,
-  ]);
-  const status = saved?.status;
+  const [saved] = await sql<{ category: string }>(
+    `select workflow_state.category from issue
+     join workflow_state on workflow_state.id = issue.state_id where issue.id = $1`,
+    [issueId],
+  );
+  const status = saved?.category;
   const result = {
     buttonTexts: changes.map((change) => change.text),
     optimisticMs: (changes[0]?.at ?? 0) - clickedAt,
     rolledBackMs: (changes.at(-1)?.at ?? 0) - clickedAt,
     errorShownMs: (await page.evaluate(() => window.spikeTimings.alertAt ?? 0)) - clickedAt,
     error: await page.locator("[role=alert]").textContent(),
-    statusInPostgres: status,
+    stateCategoryInPostgres: status,
   };
   recordResult("rollback", result);
   expect(result.buttonTexts).toEqual(["Reopen", "Done"]);
-  expect(status).toBe("todo");
+  expect(status).toBe("unstarted");
 });

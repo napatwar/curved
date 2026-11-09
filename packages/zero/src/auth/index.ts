@@ -1,4 +1,12 @@
-export { assertMember, assertMemberOfRow, type WorkspaceRole, workspaceRoles } from "./access";
+export {
+  adminRoles,
+  assertMember,
+  assertMemberOfRow,
+  notFound,
+  type WorkspaceRole,
+  workspaceRoles,
+} from "./access";
+export { whereActive, whereArchived, whereTrashed } from "./archive";
 export {
   mutationError,
   toSafeMutationError,

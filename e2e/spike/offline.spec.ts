@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { connectionLabel, observePage, recordResult, sql, waitForRows } from "./support";
+import { connectionLabel, observePage, recordResult, signIn, sql, waitForRows } from "./support";
 
 const OFFLINE_MS = 75_000;
 
@@ -13,7 +13,7 @@ test("offline for more than a minute becomes read-only and keeps queued work", a
   const page = await context.newPage();
   for (const p of [other, page]) {
     await observePage(p);
-    await p.goto("/");
+    await signIn(p);
     await waitForRows(p);
   }
   await page.bringToFront();

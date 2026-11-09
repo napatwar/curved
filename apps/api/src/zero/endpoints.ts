@@ -1,9 +1,10 @@
-import { mutators, queries, schema, toSafeMutationError, type ZeroContext } from "@curved/zero";
+import { queries, schema, toSafeMutationError, type ZeroContext } from "@curved/zero";
 import { mustGetMutator, mustGetQuery, type ReadonlyJSONValue } from "@rocicorp/zero";
 import { handleMutateRequest, handleQueryRequest } from "@rocicorp/zero/server";
 import { Hono } from "hono";
 
 import type { DbProvider } from "./db-provider";
+import { serverMutators } from "./server-mutators";
 
 type ServerTransaction = Parameters<Parameters<DbProvider["transaction"]>[0]>[0];
 
@@ -68,10 +69,10 @@ export async function runMutator(
   ctx: ZeroContext,
 ) {
   try {
-    return await mustGetMutator(mutators, name).fn({ args, ctx, tx });
+    return await mustGetMutator(serverMutators, name).fn({ args, ctx, tx });
   } catch (error) {
     const safeError = toSafeMutationError(error);
-    if (safeError !== error) {
+    if (safeError.details.code === "internal") {
       console.error(`Mutator ${name} failed`, error);
     }
     throw safeError;

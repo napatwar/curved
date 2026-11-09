@@ -16,12 +16,17 @@ export function mutationError(code: MutationErrorCode, message: string) {
 /**
  * Turns anything a mutator throws into an error that is safe to send to the
  * client. A database error from Drizzle includes the SQL and its parameters
- * (decision record 0004), so only errors made by `mutationError` keep their
- * message.
+ * (decision record 0004), so only errors made by `mutationError` and argument
+ * validation errors keep their message.
  */
 export function toSafeMutationError(error: unknown): ApplicationError<MutationErrorDetails> {
   if (isMutationError(error)) {
     return error;
+  }
+  // Zero throws this when a mutator's Zod schema rejects the arguments. Its
+  // message lists only the schema's issue messages, so it is safe to show.
+  if (error instanceof Error && error.name === "InputValidationError") {
+    return mutationError("invalid", error.message);
   }
   return mutationError("internal", "The change could not be saved. Try again later.");
 }

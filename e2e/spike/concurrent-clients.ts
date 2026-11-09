@@ -1,7 +1,7 @@
 // About 50 concurrent clients against zero-cache, for decision record 0004.
 // Run `pnpm spike:clients` with the stack up and the spike data seeded. Each
 // client syncs every issue in the workspace plus a filtered list, then changes
-// a random issue's status every 3 to 7 seconds (SPIKE_MIN_INTERVAL_MS and
+// a random issue's state every 3 to 7 seconds (SPIKE_MIN_INTERVAL_MS and
 // SPIKE_MAX_INTERVAL_MS change this). One extra client measures how
 // long each change takes to reach it. `docker stats` samples zero-cache.
 import { execFile } from "node:child_process";
@@ -22,13 +22,10 @@ const CLIENTS = Number(process.env.SPIKE_CLIENTS ?? 50);
 const WORKERS = 5;
 const IDLE_MS = 30_000;
 const ACTIVE_MS = 60_000;
-// Each client waits a random time in this range between status changes.
+// Each client waits a random time in this range between state changes.
 const MIN_INTERVAL_MS = Number(process.env.SPIKE_MIN_INTERVAL_MS ?? 3000);
 const MAX_INTERVAL_MS = Number(process.env.SPIKE_MAX_INTERVAL_MS ?? 7000);
-const statuses = ["todo", "in_progress", "done"] as const;
-
-type Status = (typeof statuses)[number];
-type IssueRow = { id: string; status: Status };
+type IssueRow = { id: string; stateId: string };
 type WorkerMessage =
   | { type: "hydrated"; ms: number }
   | { type: "mutated"; key: string; at: number }
@@ -60,7 +57,7 @@ async function runClients(count: number) {
       let rows: readonly IssueRow[] = [];
       const all = zero.materialize(queries.issues.byWorkspace({ workspaceId: WORKSPACE_ID }));
       const filtered = zero.materialize(
-        queries.issues.byFilter({ workspaceId: WORKSPACE_ID, statuses: ["todo"] }),
+        queries.issues.byFilter({ workspaceId: WORKSPACE_ID, stateCategories: ["unstarted"] }),
       );
       await Promise.all([
         new Promise<void>((resolve) => {
@@ -100,16 +97,20 @@ async function runClients(count: number) {
           if (!row) {
             continue;
           }
-          const status = statuses.filter((s) => s !== row.status)[Math.floor(Math.random() * 2)];
-          if (!status) {
+          // The team's states, as seen on the synced issues.
+          const others = [...new Set(rows.map((issue) => issue.stateId))].filter(
+            (stateId) => stateId !== row.stateId,
+          );
+          const stateId = others[Math.floor(Math.random() * others.length)];
+          if (!stateId) {
             continue;
           }
           port.postMessage({
             type: "mutated",
-            key: `${row.id}:${status}`,
+            key: `${row.id}:${stateId}`,
             at: Date.now(),
           } satisfies WorkerMessage);
-          const result = await client.zero.mutate(mutators.issues.setStatus({ id: row.id, status }))
+          const result = await client.zero.mutate(mutators.issues.update({ id: row.id, stateId }))
             .server;
           port.postMessage({
             type: "result",
@@ -169,19 +170,19 @@ async function main() {
   const observer = createClient();
   const pending = new Map<string, number>();
   const latencies: number[] = [];
-  const known = new Map<string, Status>();
+  const known = new Map<string, string>();
   await new Promise<void>((resolve) => {
     const view = observer.materialize(queries.issues.byWorkspace({ workspaceId: WORKSPACE_ID }));
     view.addListener((data, resultType) => {
       const now = Date.now();
       for (const row of data) {
-        if (known.get(row.id) !== row.status) {
-          const sentAt = pending.get(`${row.id}:${row.status}`);
+        if (known.get(row.id) !== row.stateId) {
+          const sentAt = pending.get(`${row.id}:${row.stateId}`);
           if (sentAt !== undefined) {
             latencies.push(now - sentAt);
-            pending.delete(`${row.id}:${row.status}`);
+            pending.delete(`${row.id}:${row.stateId}`);
           }
-          known.set(row.id, row.status);
+          known.set(row.id, row.stateId);
         }
       }
       if (resultType === "complete") {

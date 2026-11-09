@@ -4,6 +4,7 @@ import {
   connectionLabel,
   observePage,
   recordResult,
+  signIn,
   sql,
   waitForRows,
   watchFirstRow,
@@ -36,7 +37,7 @@ test.afterAll(async () => {
 
 test("schema changes apply without a full reset", async ({ page }) => {
   await observePage(page);
-  await page.goto("/");
+  await signIn(page);
   await waitForRows(page);
   await page.evaluate(() => {
     window.spikeTimings.loadMarker = true;

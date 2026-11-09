@@ -1,8 +1,12 @@
-// Creates the development instance admin, their workspace and a first issue.
-// It is safe to run again: existing rows are left alone.
+// Creates the development instance admin, their workspace, its first team and
+// a first issue. It is safe to run again: existing rows are left alone.
 import { hashPassword } from "better-auth/crypto";
+import { eq, sql } from "drizzle-orm";
+import { generateKeyBetween } from "fractional-indexing";
 
 import {
+  DEV_TEAM_ID,
+  DEV_TEAM_KEY,
   DEV_USER_EMAIL,
   DEV_USER_ID,
   DEV_USER_PASSWORD,
@@ -10,7 +14,16 @@ import {
   DEV_WORKSPACE_SLUG,
 } from "./dev";
 import { createDb } from "./index";
-import { account, issue, user, workspace, workspaceMember } from "./schema";
+import { account, issue, issueDescription, team, user, workspace, workspaceMember } from "./schema";
+import { createTeam } from "./teams";
+
+const WELCOME_ISSUE_ID = "00000000-0000-7000-8000-000000000101";
+
+const welcomeDescription = `Curved is an open-source task manager.
+
+- Press **Add** to create an issue.
+- Mark an issue **Done** when it is finished.
+`;
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -64,17 +77,64 @@ await db.transaction(async (tx) => {
     })
     .onConflictDoNothing();
 
-  await tx
-    .insert(issue)
-    .values({
-      id: "00000000-0000-7000-8000-000000000101",
+  const [existingTeam] = await tx
+    .select()
+    .from(team)
+    .where(eq(team.workspaceId, DEV_WORKSPACE_ID))
+    .orderBy(team.createdAt)
+    .limit(1);
+  const teamId =
+    existingTeam?.id ??
+    (
+      await createTeam(tx, {
+        id: DEV_TEAM_ID,
+        workspaceId: DEV_WORKSPACE_ID,
+        key: DEV_TEAM_KEY,
+        name: "Curved",
+      })
+    ).teamId;
+
+  const [welcome] = await tx.select().from(issue).where(eq(issue.id, WELCOME_ISSUE_ID));
+  if (!welcome) {
+    // Allocates the number the way the server mutator does.
+    const [allocated] = await tx
+      .update(team)
+      .set({ nextIssueNumber: sql`${team.nextIssueNumber} + 1` })
+      .where(eq(team.id, teamId))
+      .returning({
+        number: sql<number>`${team.nextIssueNumber} - 1`,
+        stateId: team.defaultStateId,
+      });
+    if (!allocated) {
+      throw new Error("The development team is missing");
+    }
+    const [first] = await tx
+      .select({ sortOrder: issue.sortOrder })
+      .from(issue)
+      .where(eq(issue.teamId, teamId))
+      .orderBy(issue.sortOrder, issue.id)
+      .limit(1);
+    await tx.insert(issue).values({
+      id: WELCOME_ISSUE_ID,
       workspaceId: DEV_WORKSPACE_ID,
+      teamId,
+      number: allocated.number,
       title: "Welcome to Curved",
-      status: "todo",
+      stateId: allocated.stateId,
+      priority: 0,
+      creatorId: DEV_USER_ID,
+      sortOrder: generateKeyBetween(null, first?.sortOrder ?? null),
       createdAt: now,
       updatedAt: now,
-    })
-    .onConflictDoNothing();
+    });
+    await tx.insert(issueDescription).values({
+      issueId: WELCOME_ISSUE_ID,
+      workspaceId: DEV_WORKSPACE_ID,
+      body: welcomeDescription,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
 });
 
 console.log(

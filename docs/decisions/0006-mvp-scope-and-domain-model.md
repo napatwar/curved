@@ -219,3 +219,29 @@ Implementation follow-up:
 - Update [conventions.md](../conventions.md) with the primary key exception for junction and 1:1 tables, and with `COLLATE "C"` for sort keys.
 - Measure size again, as [0004](0004-zero-spike-results.md) requires: seed `issue_description` with about 2KB of Markdown per issue, then measure the replica and the time to open an issue page.
 - Confirm that `tx.location` and server-only mutator logic behave as described in Zero 1.11.3, with an integration test where two clients create issues in the same team at once.
+
+### Implementation notes
+
+Migrations 0006 and 0007 implement this record. Where the code differs from the text above:
+
+- `issue.status` stays as a nullable column that nothing reads, writes or syncs, so open tabs with the previous Zero schema keep working ([conventions](../conventions.md), expand then contract). A later release drops it. Migration 0006 gives every workspace its first team, maps each status to a state, numbers existing issues in creation order, and deletes issues whose workspace no longer exists.
+- Unassigning a removed member is a Postgres trigger on `workspace_member`, not a Better Auth hook. Better Auth 1.7 runs no hook when a member leaves, and the trigger also covers deleting a user or a workspace.
+- `team.default_state_id` is a deferred foreign key, so a team and its states can be inserted in one transaction.
+- The server allocates numbers in `apps/api/src/zero/server-mutators.ts`, which overrides `issues.create` and `issues.moveToTeam`. The shared versions insert 0, which Postgres rejects, so a server that forgets the override fails safely. An integration test confirms this, and that two clients pushing through `/mutate` at once get every number exactly once.
+- Zero 1.11.3 exposes `date` as milliseconds at UTC midnight and writes it back through `AT TIME ZONE 'UTC'`, so mutators accept only UTC-midnight values.
+- Zero 1.11.3 cannot order a many-to-many relationship, so `issue.labels` comes unsorted and the UI sorts it.
+- List queries return plain issue rows. Views look up teams and states in `teams.byWorkspace`. Relating them on every row made the first load of 20,000 issues about 30% slower.
+- Choices this record left open: a first team's key is the first three letters or digits of the workspace slug, and its name is the workspace's. Todo is the default state. A workspace keeps at least one team. Editing a state changes its name and color, never its category.
+
+Measurements, with the setup from [0004](0004-zero-spike-results.md) and descriptions of 2,048 to 2,500 bytes of Markdown (`pnpm db:seed:spike`, then `pnpm test:spike`):
+
+| Measure                                          | 0004            | Now                                     |
+| ------------------------------------------------ | --------------- | --------------------------------------- |
+| Replica per row: issue / description / comment   | 294 / — / 535 B | 693 / 4,150 / 620 B                     |
+| Postgres per row: issue / description / comment  | 253 / — / 454 B | 526 / 1,119 / 456 B                     |
+| Fresh replica (20,001 issues, 60,000 comments)   | 38MB            | 138MB, healthy 15 s after start         |
+| Open an issue: load its description              | —               | p50 25 ms, p95 56 ms; again: under 1 ms |
+| First load of all 20,000 issues: cold / warm p50 | 999 / 877 ms    | 1,573 / 1,090 ms                        |
+| State change seen in a second browser, p95       | 126 ms          | 156 ms                                  |
+
+No decision changes. Descriptions add about 4KB per issue to the replica, because a 2KB row fills most of a 4KB SQLite page, while Postgres compresses the text. At about 7KB per issue with three comments, 50GB holds roughly 7 million issues. The issue row grew from 6 to 16 columns, so the unlimited list is slower but still under 2 seconds. The virtualized list and limited queries from 0004 remain required before real use.
