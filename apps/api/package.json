@@ -19,6 +19,7 @@
     "@sentry/node": "^11.11.0",
     "better-auth": "1.7.18",
     "drizzle-orm": "^0.45.4",
+    "fractional-indexing": "^4.0.0",
     "hono": "^4.13.16",
     "nodemailer": "^10.3.1",
     "pg": "^8.23.1",

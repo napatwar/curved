@@ -57,6 +57,13 @@
       "when": 1794167469716,
       "tag": "0007_domain_model_publication",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794170015759,
+      "tag": "0008_workspace_delete",
+      "breakpoints": true
     }
   ]
 }

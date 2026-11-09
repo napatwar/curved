@@ -1,11 +1,23 @@
 import { createDb } from "@curved/db";
 import { eq } from "@curved/db/orm";
-import { issue, team, user, workflowState, workspace, workspaceMember } from "@curved/db/schema";
+import {
+  comment,
+  issue,
+  issueDescription,
+  issueKeyAlias,
+  issueLabel,
+  label,
+  team,
+  user,
+  workflowState,
+  workspace,
+  workspaceMember,
+} from "@curved/db/schema";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { testDatabaseUrl } from "../../../../test/database";
-import { insertIssue, resetDatabase } from "../../../../test/fixtures";
+import { createWorkspace, firstTeam, insertIssue, resetDatabase } from "../../../../test/fixtures";
 import { createAuth } from "./create-auth";
 
 const db = createDb(testDatabaseUrl);
@@ -223,6 +235,81 @@ describe("workspaces", () => {
     expect(response.status).toBe(200);
     const [row] = await db.select().from(issue).where(eq(issue.id, issueId));
     expect(row?.assigneeId).toBeNull();
+  });
+
+  it("deletes the workspace's tenant data when the workspace is deleted", async () => {
+    const admin = cookieHeader(await signUp("first@example.com"));
+    const created = await call("/organization/create", { name: "Acme", slug: "acme" }, admin);
+    const { id: workspaceId } = z.object({ id: z.string() }).parse(await created.json());
+    const { id: teamId } = await firstTeam(db, workspaceId);
+    const issueId = await insertIssue(db, workspaceId);
+    const now = new Date();
+    const labelIds = [crypto.randomUUID(), crypto.randomUUID()];
+    // One workspace label and one team label.
+    await db.insert(label).values([
+      {
+        id: labelIds[0] ?? "",
+        workspaceId,
+        name: "Bug",
+        color: "#eb5757",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: labelIds[1] ?? "",
+        workspaceId,
+        teamId,
+        name: "UI",
+        color: "#5e6ad2",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    await db
+      .insert(issueLabel)
+      .values(labelIds.map((labelId) => ({ workspaceId, issueId, labelId, createdAt: now })));
+    await db
+      .insert(issueDescription)
+      .values({ issueId, workspaceId, body: "Steps", createdAt: now, updatedAt: now });
+    await db.insert(comment).values({
+      id: crypto.randomUUID(),
+      workspaceId,
+      issueId,
+      body: "Seen it",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await db.insert(issueKeyAlias).values({
+      id: crypto.randomUUID(),
+      workspaceId,
+      teamId,
+      number: 99,
+      issueId,
+      createdAt: now,
+    });
+    const otherWorkspaceId = await createWorkspace(db);
+    const otherIssueId = await insertIssue(db, otherWorkspaceId);
+
+    const response = await call("/organization/delete", { organizationId: workspaceId }, admin);
+
+    expect(response.status).toBe(200);
+    for (const table of [
+      team,
+      workflowState,
+      issue,
+      issueDescription,
+      issueKeyAlias,
+      issueLabel,
+      label,
+      comment,
+    ]) {
+      expect(await db.select().from(table).where(eq(table.workspaceId, workspaceId))).toEqual([]);
+    }
+    // Other workspaces keep their data.
+    expect(await db.select().from(issue).where(eq(issue.id, otherIssueId))).toHaveLength(1);
+    expect(await db.select().from(team).where(eq(team.workspaceId, otherWorkspaceId))).toHaveLength(
+      1,
+    );
   });
 
   it("rejects a slug that is not lowercase ASCII", async () => {
